@@ -25,13 +25,13 @@ function runTests() {
         const decoded = decodedLines[index].replace(/ /g, '');
 
         const encodedInput = poly.encode(input);
-        assert.strictEqual(encoded, encodedInput);
+        assert.strictEqual(encodedInput, encoded);
 
         const expectedDecoded = parseLine(decoded);
         const resDecoded = poly.decode(encodedInput);
-        assert.strictEqual(expectedDecoded.precision, resDecoded.precision);
-        assert.strictEqual(expectedDecoded.thirdDim || 0, resDecoded.thirdDim);
-        assert.strictEqual(expectedDecoded.thirdDimPrecision || 0, resDecoded.thirdDimPrecision);
+        assert.strictEqual(resDecoded.precision, expectedDecoded.precision);
+        assert.strictEqual(resDecoded.thirdDim, expectedDecoded.thirdDim || 0);
+        assert.strictEqual(resDecoded.thirdDimPrecision, expectedDecoded.thirdDimPrecision);
         expectedDecoded.polyline.forEach((expectedPos, i0) => {
             expectedPos.forEach((val, i1) => {
                 const precision = i1 === 2 ? resDecoded.thirdDimPrecision : resDecoded.precision;
