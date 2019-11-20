@@ -1,0 +1,22 @@
+name: cpp
+
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+  schedule:
+  - cron: '00 01 * * *'
+
+jobs:
+  build:
+    name: test
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Build and test
+      working-directory: ./cpp
+      run: mkdir -p build && cd build && cmake .. && make && make test

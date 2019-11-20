@@ -1,0 +1,50 @@
+name: rust
+
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+  schedule:
+  - cron: '00 01 * * *'
+
+jobs:
+  build:
+    name: test
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        build: [stable, beta, nightly]
+        include:
+        - build: stable
+          rust: stable
+        - build: beta
+          rust: beta
+        - build: nightly
+          rust: nightly
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Build
+      working-directory: ./rust
+      run: cargo build --all-targets
+    - name: Test
+      working-directory: ./rust
+      run: cargo test
+    - name: Doc
+      working-directory: ./rust
+      run: cargo doc
+
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Check formatting
+      working-directory: ./rust
+      run: cargo fmt -- --check

@@ -1,5 +1,8 @@
 # Flexible Polyline encoding
 
+![C++ build status](https://github.com/heremaps/flexible-polyline/workflows/cpp/badge.svg)
+![Rust build status](https://github.com/heremaps/flexible-polyline/workflows/rust/badge.svg)
+
 The flexible polyline encoding is a lossy compressed representation of a list of coordinate pairs or
 coordinate triples.
 
