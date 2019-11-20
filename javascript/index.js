@@ -170,26 +170,26 @@ function encodeHeader(precision, thirdDim, thirdDimPrecision) {
 function encodeUnsignedNumber(val) {
     // Uses variable integer encoding to encode an unsigned integer. Returns the encoded string.
     let res = '';
-    let bigIntVal = Num(val);
-    while (bigIntVal > 0x1F) {
-        const pos = (bigIntVal & Num(0x1F)) | Num(0x20);
+    let numVal = Num(val);
+    while (numVal > 0x1F) {
+        const pos = (numVal & Num(0x1F)) | Num(0x20);
         res += ENCODING_TABLE[pos];
-        bigIntVal >>= Num(5);
+        numVal >>= Num(5);
     }
-    return res + ENCODING_TABLE[bigIntVal];
+    return res + ENCODING_TABLE[numVal];
 }
 
 function encodeScaledValue(value) {
     // Transform a integer `value` into a variable length sequence of characters.
     //   `appender` is a callable where the produced chars will land to
-    let bigIntValue = Num(value);
-    const negative = bigIntValue < 0;
-    bigIntValue <<= Num(1);
+    let numVal = Num(value);
+    const negative = numVal < 0;
+    numVal <<= Num(1);
     if (negative) {
-        bigIntValue = ~bigIntValue;
+        numVal = ~numVal;
     }
 
-    return encodeUnsignedNumber(bigIntValue);
+    return encodeUnsignedNumber(numVal);
 }
 
 module.exports = {
