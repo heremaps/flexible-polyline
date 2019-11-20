@@ -193,4 +193,9 @@ function encodeScaledValue(value) {
 module.exports = {
     encode,
     decode,
+
+    ABSENT,
+    LEVEL,
+    ALTITUDE,
+    ELEVATION,
 };
