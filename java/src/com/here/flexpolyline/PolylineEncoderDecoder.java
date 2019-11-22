@@ -149,8 +149,7 @@ public class PolylineEncoderDecoder {
                 throw new IllegalArgumentException("thirdDimPrecision out of range");
             }
 
-            if (thirdDimensionValue < 0 || thirdDimensionValue > 7 || thirdDimensionValue == 4 ||
-                thirdDimensionValue == 5) {
+            if (thirdDimensionValue < 0 || thirdDimensionValue > 7) {
                 throw new IllegalArgumentException("thirdDimensionValue out of range");
             }
             long res = (thirdDimPrecision << 7) | (thirdDimensionValue << 4) | precision;
@@ -289,7 +288,7 @@ public class PolylineEncoderDecoder {
 
 		private static void encodeUnsignedVarint(long value, StringBuilder result) {
 			while (value > 0x1F) {
-				byte pos = (byte) ((value & 0x1F) | 0x20);
+				byte pos =  (byte) ((value & 0x1F) | 0x20);
 				result.append(ENCODING_TABLE[pos]);
 				value >>= 5;
 			}
@@ -297,7 +296,13 @@ public class PolylineEncoderDecoder {
 		}
 
 		void encodeValue(double value, StringBuilder result) {
-			long scaledValue = (long)Math.round(value * multiplier);
+		    /*
+		     * Round-half-up
+		     * round(-1.4) --> -1
+		     * round(-1.5) --> -2
+		     * round(-2.5) --> -3
+		     */
+            long scaledValue = (long) Math.round(Math.abs(value * multiplier)) * Math.round(Math.signum(value));
 			long delta = scaledValue - lastValue;
 			boolean negative = delta < 0;
 
@@ -318,7 +323,7 @@ public class PolylineEncoderDecoder {
                                                     AtomicLong result) {
             short shift = 0;
             long delta = 0;
-            int value;
+            long value;
 
             while (index.get() < encoded.length) {
                 value = decodeChar(encoded[index.get()]);
@@ -369,7 +374,8 @@ public class PolylineEncoderDecoder {
         LEVEL(1),
         ALTITUDE(2),
         ELEVATION(3),
-        // Reserved values should not be selectable
+        RESERVED1(4),
+        RESERVED2(5),
         CUSTOM1(6),
         CUSTOM2(7);
 
