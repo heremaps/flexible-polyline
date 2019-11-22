@@ -14,14 +14,17 @@ import static com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension.ALTITU
 import static com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension.ELEVATION;
 import static com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension.LEVEL;
 
+import java.io.BufferedReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.here.polyline.PolylineEncoderDecoder.Converter;
-import com.here.polyline.PolylineEncoderDecoder.LatLngZ;
-import com.here.polyline.PolylineEncoderDecoder.ThirdDimension;
+import com.here.flexpolyline.PolylineEncoderDecoder.Converter;
+import com.here.flexpolyline.PolylineEncoderDecoder.LatLngZ;
+import com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension;
 
 /**
  * Validate polyline encoding with different input combinations.
@@ -92,8 +95,8 @@ public class PolylineEncoderDecoderTest {
     }
 
     private void testLatLngZEncode() {
-        List<LatLngZ> tuples = new ArrayList<>();
 
+        List<LatLngZ> tuples = new ArrayList<>();
         tuples.add(new LatLngZ(50.1022829, 8.6982122, 10));
         tuples.add(new LatLngZ(50.1020076, 8.6956695, 20));
         tuples.add(new LatLngZ(50.1006313, 8.6914960, 30));
@@ -193,6 +196,117 @@ public class PolylineEncoderDecoderTest {
         }
     }
 
+    private static final String TEST_FILES_RELATIVE_PATH = "../test/";
+
+    private void encodingSmokeTest() {
+
+        int lineNo = 0;
+        try (BufferedReader input = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "original.txt"));
+             BufferedReader encoded = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/encoded.txt"))) {
+
+            String inputFileLine;
+            String encodedFileLine;
+
+            // read line by line and validate the test
+            while ((inputFileLine = input.readLine()) != null && (encodedFileLine = encoded.readLine()) != null) {
+
+                lineNo++;
+                int precision = 0;
+                int thirdDimPrecision = 0;
+                boolean hasThirdDimension = false;
+                ThirdDimension thirdDimension = ThirdDimension.ABSENT;
+                inputFileLine = inputFileLine.trim();
+                encodedFileLine = encodedFileLine.trim();
+
+                //File parsing
+                String[] inputs = inputFileLine.substring(1, inputFileLine.length() - 1).split(";");
+                String[] meta = inputs[0].trim().substring(1, inputs[0].trim().length() - 1).split(",");
+                precision = Integer.valueOf(meta[0]);
+
+                if (meta.length > 1) {
+                    thirdDimPrecision = Integer.valueOf(meta[1].trim());
+                    thirdDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()));
+                    hasThirdDimension = true;
+                }
+                List<LatLngZ> latLngZs = extractLatLngZ(inputs[1], hasThirdDimension);
+                String encodedComputed = encode(latLngZs, precision, thirdDimension, thirdDimPrecision);
+                String encodedExpected = encodedFileLine;
+                assertEquals(encodedComputed, encodedExpected);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.format("LineNo: " + lineNo + " validation got exception: %s%n", e);
+        }
+    }
+
+    private void decodingSmokeTest() {
+
+        int lineNo = 0;
+        try (BufferedReader encoded = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/encoded.txt"));
+             BufferedReader decoded = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/decoded.txt"))) {
+
+            String encodedFileLine;
+            String decodedFileLine;
+
+            // read line by line and validate the test
+            while ((encodedFileLine = encoded.readLine()) != null && (decodedFileLine = decoded.readLine()) != null) {
+
+                lineNo++;
+                boolean hasThirdDimension = false;
+                ThirdDimension expectedDimension = ThirdDimension.ABSENT;
+                encodedFileLine = encodedFileLine.trim();
+                decodedFileLine = decodedFileLine.trim();
+
+                //File parsing
+                String[] output = decodedFileLine.substring(1, decodedFileLine.length() - 1).split(";");
+                String[] meta = output[0].trim().substring(1, output[0].trim().length() - 1).split(",");
+                if (meta.length > 1) {
+                    expectedDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()));
+                    hasThirdDimension = true;
+                }
+                String decodedInputLine = decodedFileLine.substring(1, decodedFileLine.length() - 1).split(";")[1];
+                List<LatLngZ> expectedLatLngZs = extractLatLngZ(decodedInputLine, hasThirdDimension);
+
+                //Validate thirdDimension
+                ThirdDimension computedDimension = getThirdDimension(encodedFileLine);
+                assertEquals(computedDimension, expectedDimension);
+
+                //Validate LatLngZ
+                List<LatLngZ> computedLatLngZs = decode(encodedFileLine);
+                assertEquals(computedLatLngZs.size(), expectedLatLngZs.size());
+                for (int i = 0; i < computedLatLngZs.size(); ++i) {
+                    assertEquals(computedLatLngZs.get(i), expectedLatLngZs.get(i));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.format("LineNo: " + lineNo + " validation got exception: %s%n", e);
+        }
+    }
+
+    private static List<LatLngZ> extractLatLngZ(String line, boolean hasThirdDimension) {
+        List<LatLngZ> latLngZs = new ArrayList<LatLngZ>();
+
+        String[] coordinates  = line.trim().substring(1, line.trim().length()-1).split(",");
+        for(int itr = 0; itr < coordinates.length && !isNullOrEmpty(coordinates[itr]); ) {
+            double lat = Double.valueOf(coordinates[itr++].trim().replace("(", ""));
+            double lng = Double.valueOf(coordinates[itr++].trim().replace(")", ""));
+            double z   = 0;
+            if(hasThirdDimension) {
+                 z   = Double.valueOf(coordinates[itr++].trim().replace(")", ""));
+            }
+            latLngZs.add(new LatLngZ(lat, lng, z));
+        }
+        return latLngZs;
+    }
+
+    public static boolean isNullOrEmpty(String str) {
+        if(str != null && !str.trim().isEmpty()) {
+            return false;
+        }
+        return true;
+    }
+
     private static void assertEquals(Object lhs, Object rhs) {
         if (lhs != rhs) {
             if (!lhs.equals(rhs)) {
@@ -228,7 +342,8 @@ public class PolylineEncoderDecoderTest {
         test.testSimpleLatLngEncoding();
         test.testComplexLatLngEncoding();
         test.testLatLngZEncode();
-        
+        test.encodingSmokeTest();
+
         //Decode test
         test.testInvalidEncoderInput();
         test.testThirdDimension();
@@ -236,5 +351,6 @@ public class PolylineEncoderDecoderTest {
         test.testSimpleLatLngDecoding();
         test.testComplexLatLngDecoding();
         test.testLatLngZDecode();
+        test.decodingSmokeTest();
     }
 }
