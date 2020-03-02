@@ -19,5 +19,8 @@
     "type": "git",
     "url": "https://github.com/heremaps/flexible-polyline.git",
     "directory": "javascript"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
