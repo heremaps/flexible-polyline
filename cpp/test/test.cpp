@@ -88,6 +88,7 @@ void test_decode1() {
     auto res = hf::polyline_decode("BFoz5xJ67i1B1B7PzIhaxL7Y", [&polyline](double lat, double lng, double z) {
         polyline.push_back({lat, lng});
     });
+    assert_true(res);
     std::vector<std::pair<double, double>> expected{{
         {50.10228, 8.69821},
         {50.10201, 8.69567},
@@ -99,7 +100,7 @@ void test_decode1() {
     for (size_t i = 0; i < polyline.size(); ++i) {
         double delta_lat = std::abs(polyline[i].first - expected[i].first);
         double delta_lng = std::abs(polyline[i].second - expected[i].second);
-        assert_true(delta_lng <= 0.000001);
+        assert_true(delta_lat <= 0.000001);
         assert_true(delta_lng <= 0.000001);
     }
 }
@@ -109,6 +110,7 @@ void test_decode2() {
     auto res = hf::polyline_decode("BF05xgKuy2xCx9B7vUl0OhnR54EqSzpEl-HxjD3pBiGnyGi2CvwFsgD3nD4vB6e", [&polyline](double lat, double lng, double z) {
         polyline.push_back({lat, lng});
     });
+    assert_true(res);
     std::vector<std::pair<double, double>> expected{{
         {52.51994, 13.38663},
         {52.51009, 13.28169},
@@ -126,7 +128,7 @@ void test_decode2() {
     for (size_t i = 0; i < polyline.size(); ++i) {
         double delta_lat = std::abs(polyline[i].first - expected[i].first);
         double delta_lng = std::abs(polyline[i].second - expected[i].second);
-        assert_true(delta_lng <= 0.000001);
+        assert_true(delta_lat <= 0.000001);
         assert_true(delta_lng <= 0.000001);
     }
 }
@@ -136,6 +138,7 @@ void test_decode3() {
     auto res = hf::polyline_decode("BlBoz5xJ67i1BU1B7PUzIhaUxL7YU", [&polyline](double lat, double lng, double z) {
         polyline.push_back({lat, lng, z});
     });
+    assert_true(res);
     std::vector<std::tuple<double, double, double>> expected{{
         {50.10228, 8.69821, 10},
         {50.10201, 8.69567, 20},
@@ -148,7 +151,7 @@ void test_decode3() {
         double delta_lat = std::abs(std::get<0>(polyline[i]) - std::get<0>(expected[i]));
         double delta_lng = std::abs(std::get<1>(polyline[i]) - std::get<1>(expected[i]));
         double delta_z = std::abs(std::get<2>(polyline[i]) - std::get<2>(expected[i]));
-        assert_true(delta_lng <= 0.000001);
+        assert_true(delta_lat <= 0.000001);
         assert_true(delta_lng <= 0.000001);
         assert_true(delta_z <= 0.000001);
     }
