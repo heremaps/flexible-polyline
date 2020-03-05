@@ -99,7 +99,7 @@ namespace encoder {
             bool inline static decode_unsigned_varint(const std::string& encoded, uint32_t& index, uint32_t length, int64_t& result) {
                 int64_t delta = 0;
                 short shift = 0;
-                int8_t value;
+                int8_t value = 0;
 
                 while (index < length) {
                     value = decode_char(encoded[index]);
@@ -125,7 +125,7 @@ namespace encoder {
             }
 
             bool decode_value(const std::string& encoded, uint32_t& index, uint32_t length, double& result) {
-                int64_t delta;
+                int64_t delta = 0;
                 if (!decode_unsigned_varint(encoded, index, length, delta)) {
                     return false;
                 }
@@ -232,7 +232,7 @@ namespace encoder {
             }
 
             void inline static decode_header_from_string(const std::string& encoded, uint32_t& index, uint32_t length, uint16_t& header) {
-                int64_t value;
+                int64_t value = 0;
                 /* Decode the header version */
                 if(!Converter::decode_unsigned_varint(encoded, index, length, value)) throw std::invalid_argument("Invalid encoding");
                 if (value != hf::FORMAT_VERSION) throw std::invalid_argument("Invalid format version");
@@ -243,7 +243,7 @@ namespace encoder {
             }
 
             void decode_header() {
-                uint16_t header;
+                uint16_t header = 0;
                 decode_header_from_string(m_encoded, m_index, m_length, header);
                 m_precision = header & 15;  // we pick the first 3 bits only
                 header >>= 4;
