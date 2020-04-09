@@ -12,8 +12,14 @@ coordinate triples. It achieves that by:
 
 ## Install
 
-```python
-pip install flexpolyline
+[FlexPolyline](https://github.com/heremaps/flexible-polyline) is meant to be a reference implementation,
+not a library. Due to that, the best way to include FlexPolyline into your code is to copy the source 
+code directly into yours. 
+
+To install the library locally, e.g. for working from the command line, you can use
+```bash
+python setup.py install
+pip install -e .
 ```
 
 ## Usage
