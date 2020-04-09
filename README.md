@@ -13,15 +13,19 @@ It achieves that by:
 The encoding is a variant of [Encoded Polyline Algorithm Format]. The advantage of this encoding
 over the original are the following:
 
-* Output string is composed by only URL-safe characters, i.e. may be used without URL encoding as query
-parameters.
+* Output string is composed by only URL-safe characters, i.e. may be used without URL encoding as 
+  query parameters.
 * Floating point precision is configurable: This allows to represent coordinates with
-precision up to microns (5 decimal places allow meter precision only).
-* It allows to encode a 3rd dimension with a given precision, which may be a level, altitude, elevation or some other custom value.
+  precision up to microns (5 decimal places allow meter precision only).
+* It allows to encode a 3rd dimension with a given precision, which may be a level, altitude, 
+  elevation or some other custom value.
 
 ## Specifications
 
-An encoded flexible polyline is composed by two main parts: A header and the actual polyline data. The header always starts with a version number that refers to the specifications in use. A change in the version may affect the logic to encode and decode the rest of the header and data. v.1 is the only version currently defined and this is the version assumed in the rest of the document.
+An encoded flexible polyline is composed by two main parts: A header and the actual polyline data. 
+The header always starts with a version number that refers to the specifications in use. A change in 
+the version may affect the logic to encode and decode the rest of the header and data. v.1 is the 
+only version currently defined and this is the version assumed in the rest of the document.
 
 ```[header version][header content][data]```
 
@@ -29,8 +33,9 @@ An encoded flexible polyline is composed by two main parts: A header and the act
 
 Both header and data make use of variable length integer encoding.
 
-Every input integer is converted in one or more chunks of 6 bits where the highest bit is a control bit while the remaining five store actual data.
-Each of these chunks gets encoded separately as a printable character using the following character set:
+Every input integer is converted in one or more chunks of 6 bits where the highest bit is a control 
+bit while the remaining five store actual data. Each of these chunks gets encoded separately as a 
+printable character using the following character set:
 
 ```ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_```
 
@@ -38,16 +43,23 @@ Where `A` represents 0  and `_` represents 63.
 
 #### Encoding an unsigned integer
 
-The variable encoding uses the highest bit (the sixth in this case) as control bit: When it's set to `1` it means another chunk needs to be read. Here is the algorithm to encode an unsigned integer:
+The variable encoding uses the highest bit (the sixth in this case) as control bit: When it's set to 
+`1` it means another chunk needs to be read. Here is the algorithm to encode an unsigned integer:
 
 1. Given the binary representation of the number, split it in chunks of 5 bits.
 2. Convert every chunk from right to left.
- 1. Every chunk that is followed by another chunk will be in OR with `0x20` (set the sixth bit to `1`) and then encoded as a character.
- 2. The last chunk (leftmost) is encoded as a character directly since the sixth bit is already set to `0`.
+ 1. Every chunk that is followed by another chunk will be in OR with `0x20` (set the sixth bit to 
+    `1`) and then encoded as a character.
+ 2. The last chunk (leftmost) is encoded as a character directly since the sixth bit is already set 
+    to `0`.
 
 #### Encoding a signed integer
 
-In the binary representation of signed integers, the least significant bit stores the sign and the subsequent bits store the absolute number value. So for example, the number 7 is represented as `1110` and -7 as `1111`. After this transformation, the normal unsigned integer encoding algorithm can be used.
+In the binary representation of signed integers, the least significant bit stores the sign and the 
+subsequent bits encode the number value resp. `abs(n)-1` for `n < 0`. That is, a positive integer 
+`p` is stored as `2*p` while a negative integer `n` is stored as `2*abs(n)-1`. So for example, the 
+number 7 is represented as `1110` and -7 as `1101`. After this transformation, the normal unsigned 
+integer encoding algorithm can be used.
 
 
 ### Header version
@@ -65,11 +77,13 @@ value [3rd dim precision] [3rd dim flag] [precision]
 
 #### precision
 
-Refers to the precision (decimal digits after the comma) of the latitude and longitude coordinates. It's encoded as an unsigned integer with a range 0 to 15.
+Refers to the precision (decimal digits after the comma) of the latitude and longitude coordinates. 
+It is encoded as an unsigned integer with a range 0 to 15.
 
 #### 3rd dim flag
 
-This flag specifies whether the third dimension is present and what meaning it has. It's encoded as an unsigned integer with a range 0 to 7.
+This flag specifies whether the third dimension is present and what meaning it has. It's encoded as 
+an unsigned integer with a range 0 to 7.
 
 Possible values are:
 
@@ -85,15 +99,19 @@ Possible values are:
 
 #### 3rd dim precision
 
-Refers to the precision (decimal digits after the comma) of the third dimension. Possible values are 0 to 15.
+Refers to the precision (decimal digits after the comma) of the third dimension. Possible values are 
+0 to 15.
 
 ### Data
 
-All data values need to be normalized before encoding by transforming them to integers with the given precision. For example if precision is 5, the value 12.3 becomes 1230000.
+All data values need to be normalized before encoding by transforming them to integers with the 
+given precision. For example if precision is 5, the value 12.3 becomes 1230000.
 
-The data section is composed by a sequence of signed varints grouped in tuples of the same size (2 if the 3rd dimension flag is absent and 3 otherwise).
+The data section is composed by a sequence of signed varints grouped in tuples of the same size (2 
+if the 3rd dimension flag is absent and 3 otherwise).
 
-The first tuple contains the first set of normalized coordinates, while any other subsequent tuple contains the offset between two consecutive values on the same dimension.
+The first tuple contains the first set of normalized coordinates, while any other subsequent tuple 
+contains the offset between two consecutive values on the same dimension.
 
 ```Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0) ...```
 
@@ -128,7 +146,8 @@ decode(string) -> coordinates;
 get_third_dimension(string) -> third_dimension;
 ```
 
-To test your implementation, use the polylines defined in [test/original.txt]. Depending on the round function available in the language the expected encoded and decoded files need to be used:
+To test your implementation, use the polylines defined in [test/original.txt]. Depending on the 
+round function available in the language the expected encoded and decoded files need to be used:
 
 * Round to nearest, ties away from zero:
   * [test/round\_half_up/encoded.txt]
@@ -137,13 +156,16 @@ To test your implementation, use the polylines defined in [test/original.txt]. D
   * [test/round\_half_even/encoded.txt]
   * [test/round\_half_even/decoded.txt]
 
-Check that encoded the original data results in the encoded form, and that decoding it again results in the decoded form.
+Check that encoded the original data results in the encoded form, and that decoding it again results 
+in the decoded form.
 Format of the unencoded data is:
 
 * 2d: `{(precision2d); [(lat, lon), ..., (lat, lon), ]}`
 * 3d: `{(precision2d, precision3d, type3d); [(lat, lon, z), ..., (lat, lon, z), ]}`
 
-Floating point numbers are printed with 15 digits decimal precision. Be aware that encoding is lossy: Decoding an encoded polyline will not always yield the original, and neither will encoding a decoded polyline result in the same encoded representation.
+Floating point numbers are printed with 15 digits decimal precision. Be aware that encoding is 
+lossy: Decoding an encoded polyline will not always yield the original, and neither will encoding a 
+decoded polyline result in the same encoded representation.
 
 ## TODO
 
