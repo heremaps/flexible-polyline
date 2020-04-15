@@ -1,0 +1,13 @@
+name: flexible_polyline
+description: Flutter Flexible Polyline
+version: 1.0.0-alpha
+author: Randy Almand <randyalmand@lucidmotors.com>
+
+environment:
+  sdk: '>=2.2.2 <3.0.0'
+
+dependencies:
+  tuple: ^1.0.3
+
+dev_dependencies:
+  test: ^1.0.0
