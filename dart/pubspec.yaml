@@ -3,7 +3,6 @@ description: >-
     Flexible Polyline encoder and decoder for representing a list of GPS
     coordinates (and optional elevation) into a compressed URL-safe string.
 version: 1.0.0-alpha
-author: Randy Almand <ralmand@gmail.com>
 homepage: https://github.com/heremaps/flexible-polyline
 repository: https://github.com/heremaps/flexible-polyline/dart
 
@@ -11,6 +10,7 @@ environment:
   sdk: '>=2.2.2 <3.0.0'
 
 dependencies:
+  path: ^1.7.0
   tuple: ^1.0.3
 
 dev_dependencies:
