@@ -15,8 +15,10 @@ pairs.add(LatLngZ(50.1020076, 8.6956695));
 pairs.add(LatLngZ(50.1006313, 8.6914960));
 pairs.add(LatLngZ(50.0987800, 8.6875156));
 
-String encoded =
-    FlexiblePolyline.encode(pairs /* coordinates */, 5 /* coordinate precision */, ThirdDimension.ABSENT /* third dimension */, 0 /* third dimension precision */);
+String encoded = FlexiblePolyline.encode(pairs /* coordinates */,
+	5 /* coordinate precision */, ThirdDimension.ABSENT /* third dimension */,
+	0 /* third dimension precision */);
+
 // encoded == 'BFoz5xJ67i1B1B7PzIhaxL7Y'
 ```
 
