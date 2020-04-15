@@ -1,6 +1,4 @@
-///
 /// Coordinate triple
-///
 class LatLngZ {
   final double lat;
   final double lng;
@@ -18,11 +16,9 @@ class LatLngZ {
   int get hashCode => this.lat.hashCode + this.lng.hashCode + this.z.hashCode;
 }
 
-///
-/// 	3rd dimension specification.
-///  Example a level, altitude, elevation or some other custom value.
-///  ABSENT is default when there is no third dimension en/decoding required.
-///
+/// 3rd dimension specification.
+/// Example a level, altitude, elevation or some other custom value.
+/// ABSENT is default when there is no third dimension en/decoding required.
 enum ThirdDimension {
   ABSENT,
   LEVEL,
