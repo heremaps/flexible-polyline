@@ -4,7 +4,8 @@ import 'package:flexible_polyline/flexible_polyline.dart';
 import 'package:tuple/tuple.dart';
 
 ///
-/// Stateful instance for encoding and decoding on a sequence of Coordinates part of an request.
+/// Stateful instance for encoding and decoding on a sequence of Coordinates 
+/// part of a request.
 /// Instance should be specific to type of coordinates (e.g. Lat, Lng)
 /// so that specific type delta is computed for encoding.
 /// Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)
@@ -48,7 +49,7 @@ class Converter {
     return Tuple2(0, index);
   }
 
-  //Decode single coordinate (say lat|lng|z) starting at index
+  // Decode single coordinate (say lat|lng|z) starting at index
   // Returns decoded coordinate, new index in tuple
   Tuple2<double, int> decodeValue(String encoded, int index) {
     Tuple2<int, int> result = decodeUnsignedVarint(encoded.split(''), index);
