@@ -89,11 +89,13 @@ class FlexiblePolyline {
   ];
 
   ///
-  /// Decode the encoded input {@link String} to {@link List} of coordinate triples.<BR><BR>
+  /// Decode the encoded input {@link String} to {@link List} of coordinate 
+  /// triples.
+  /// 
   /// @param encoded URL-safe encoded {@link String}
   /// @return {@link List} of coordinate triples that are decoded from input
   ///
-  /// @see PolylineDecoder#getThirdDimension(String) getThirdDimension
+  /// @see FlexiblePolyline#getThirdDimension(String) getThirdDimension
   /// @see LatLngZ
   ///
   static List<LatLngZ> decode(String encoded) {
@@ -113,12 +115,15 @@ class FlexiblePolyline {
 
   ///
   /// Encode the list of coordinate triples.<BR><BR>
-  /// The third dimension value will be eligible for encoding only when ThirdDimension is other than ABSENT.
+  /// The third dimension value will be eligible for encoding only when 
+  /// ThirdDimension is other than ABSENT.
   /// This is lossy compression based on precision accuracy.
   ///
   /// @param coordinates {@link List} of coordinate triples that to be encoded.
-  /// @param precision   Floating point precision of the coordinate to be encoded.
-  /// @param thirdDimension {@link ThirdDimension} which may be a level, altitude, elevation or some other custom value
+  /// @param precision   Floating point precision of the coordinate to be 
+  /// encoded.
+  /// @param thirdDimension {@link ThirdDimension} which may be a level, 
+  /// altitude, elevation or some other custom value
   /// @param thirdDimPrecision Floating point precision for thirdDimension value
   /// @return URL-safe encoded {@link String} for the given coordinates.
   ///
@@ -152,9 +157,7 @@ class FlexiblePolyline {
   }
 }
 
-///
 /// Single instance for decoding an input request.
-///
 class _Decoder {
   String encoded;
   int index;
@@ -222,9 +225,8 @@ class _Decoder {
   }
 }
 
-///
-/// Single instance for configuration, validation and encoding for an input request.
-///
+/// Single instance for configuration, validation and encoding for an input 
+/// request.
 class _Encoder {
   String result;
   Converter latConverter;
@@ -245,7 +247,8 @@ class _Encoder {
 
   void encodeHeader(
       int precision, int thirdDimensionValue, int thirdDimPrecision) {
-    /// Encode the `precision`, `third_dim` and `third_dim_precision` into one encoded char
+    /// Encode the `precision`, `third_dim` and `third_dim_precision` into one 
+    /// encoded char
     if (precision < 0 || precision > 15) {
       throw ArgumentError("precision out of range");
     }
