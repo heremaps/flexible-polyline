@@ -4,21 +4,18 @@ import 'package:flexible_polyline/flexible_polyline.dart';
 import 'package:tuple/tuple.dart';
 
 ///
-/// Stateful instance for encoding and decoding on a sequence of Coordinates 
+/// Stateful instance for encoding and decoding on a sequence of Coordinates
 /// part of a request.
 /// Instance should be specific to type of coordinates (e.g. Lat, Lng)
 /// so that specific type delta is computed for encoding.
 /// Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)
 ///
 class Converter {
-  int multiplier = 0;
+  final int precision;
+  int multiplier;
   int lastValue = 0;
 
-  Converter(int precision) {
-    setPrecision(precision);
-  }
-
-  void setPrecision(int precision) {
+  Converter(this.precision) {
     multiplier = pow(10, precision);
   }
 
@@ -52,7 +49,8 @@ class Converter {
   // Decode single coordinate (say lat|lng|z) starting at index
   // Returns decoded coordinate, new index in tuple
   Tuple2<double, int> decodeValue(String encoded, int index) {
-    Tuple2<int, int> result = decodeUnsignedVarint(encoded.split(''), index);
+    final Tuple2<int, int> result =
+        decodeUnsignedVarint(encoded.split(''), index);
     double coordinate = 0;
     int delta = result.item1;
     if ((delta & 1) != 0) {
@@ -83,9 +81,9 @@ class Converter {
      * round(-1.5) --> -2
      * round(-2.5) --> -3
      */
-    double scaledValue = (value * multiplier).abs().round() * value.sign;
+    final double scaledValue = (value * multiplier).abs().round() * value.sign;
     int delta = (scaledValue - lastValue).toInt();
-    bool negative = delta < 0;
+    final bool negative = delta < 0;
 
     lastValue = scaledValue.toInt();
 
@@ -101,7 +99,7 @@ class Converter {
 
   //Decode a single char to the corresponding value
   static int decodeChar(String charValue) {
-    int pos = charValue.codeUnitAt(0) - 45;
+    final int pos = charValue.codeUnitAt(0) - 45;
     if (pos < 0 || pos > 77) {
       return -1;
     }
