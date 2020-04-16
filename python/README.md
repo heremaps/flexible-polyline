@@ -19,6 +19,9 @@ code directly into yours.
 To install the library locally, e.g. for working from the command line, you can use
 ```bash
 python setup.py install
+```
+or
+```bash
 pip install -e .
 ```
 
