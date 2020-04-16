@@ -10,10 +10,10 @@ class LatLngZ {
   String toString() => "LatLngZ [lat=$lat, lng=$lng, z=$z]";
 
   @override
-  bool operator ==(other) => this.hashCode == other.hashCode;
+  bool operator ==(other) => hashCode == other.hashCode;
 
   @override
-  int get hashCode => this.lat.hashCode + this.lng.hashCode + this.z.hashCode;
+  int get hashCode => lat.hashCode + lng.hashCode + z.hashCode;
 }
 
 /// 3rd dimension specification.
