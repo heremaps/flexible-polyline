@@ -10,7 +10,8 @@ class LatLngZ {
   String toString() => "LatLngZ [lat=$lat, lng=$lng, z=$z]";
 
   @override
-  bool operator ==(other) => hashCode == other.hashCode;
+  bool operator ==(other) =>
+      other is LatLngZ && other.lat == lat && other.lng == lng && other.z == z;
 
   @override
   int get hashCode => lat.hashCode + lng.hashCode + z.hashCode;
