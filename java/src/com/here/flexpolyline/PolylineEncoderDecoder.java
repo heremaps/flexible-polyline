@@ -213,9 +213,9 @@ public class PolylineEncoderDecoder {
         private void decodeHeader() {
             AtomicLong header = new AtomicLong(0);
             decodeHeaderFromString(encoded, index, header);
-            precision = (int) (header.get() & 15); // we pick the first 3 bits only
+            precision = (int) (header.get() & 15); // we pick the first 4 bits only
             header.set(header.get() >> 4);
-            thirdDimension = ThirdDimension.fromNum(header.get() & 7); // we pick the first 4 bits only
+            thirdDimension = ThirdDimension.fromNum(header.get() & 7); // we pick the first 3 bits only
             thirdDimPrecision = (int) ((header.get() >> 3) & 15);
         }
         
