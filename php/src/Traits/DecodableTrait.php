@@ -113,7 +113,7 @@ trait DecodableTrait
             $charcode = mb_ord($char);
             $decoded = self::DECODING_TABLE[$charcode - 45];
         } catch (Exception $e) {
-            throw new Exception('Char ' . $char . ' could not be decoded charcode: ' . $charcode . ' using index ' . ($charcode - 45));
+            throw new Exception('Char could not be decoded');
         }
 
         return $decoded;
