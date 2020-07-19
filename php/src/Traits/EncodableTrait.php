@@ -13,8 +13,12 @@ use Exception;
 trait EncodableTrait
 {
     
-    public static function encode(array $coordinates, int $precision = null, int $thirdDim = null, int $thirdDimPrecision = 0): string
-    {
+    public static function encode(
+        array $coordinates,
+        int $precision = null,
+        int $thirdDim = null,
+        int $thirdDimPrecision = 0
+    ): string {
         if (is_null($precision)) {
             $precision = self::DEFAULT_PRECISION;
         }
