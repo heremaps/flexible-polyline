@@ -6,37 +6,30 @@
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/flexpolyline?color=brightgreen)](https://CRAN.R-project.org/package=flexpolyline)
 <!-- badges: end -->
 
-The **flexpolyline** R package provides a binding to the
+The **[flexpolyline](https://CRAN.R-project.org/package=flexpolyline)** R package
+provides a binding to the
 [C++ implementation](https://github.com/heremaps/flexible-polyline/tree/master/cpp)
-of the flexible polyline encoding by
-[HERE](https://github.com/heremaps/flexible-polyline).
+of the flexible polyline encoding by HERE. The package is designed to
+interface with simple feature objects of the
+**[sf](https://CRAN.R-project.org/package=sf)** R package. For information on
+how to encode and decode polylines in R check the package
+[documentation](https://munterfinger.github.io/flexpolyline/index.html) or the
+[repository](https://github.com/munterfinger/flexpolyline) on GitHub.
 
 **Note:**
-* Decoding gives reliable results up to a precision of 7 digits.
-The tests are also limited to this range.
 * The order of the coordinates (lng, lat) does not correspond to the original
-C++ implementation (lat, lng). This enables simple conversion to `sf` objects,
-without reordering the columns.
-* The encoding is lossy, this means the encoding process could reduce the
-precision of your data.
+C++ implementation (lat, lng). This enables simple conversion to simple feature
+objects without reordering the columns.
+* Decoding gives reliable results up to a precision of 7 digits.
+The package tests are also limited to this range.
 
-## Installation
+## Get started
 
-You can install the released version of **flexpolyline**
-from [CRAN](https://CRAN.R-project.org/package=flexpolyline) with:
+Install the released version of **flexpolyline** from CRAN with:
 
 ``` r
 install.packages("flexpolyline")
 ```
-
-Install the development version
-from [GitHub](https://github.com/munterfinger/flexpolyline) with:
-
-``` r
-remotes::install_github("munterfinger/flexpolyline")
-```
-
-## C++ binding
 
 Encoding and decoding in R is straight forward by using `encode()` and `decode()`.
 These functions are binding to the flexpolyline C++ implementation and reflect
@@ -44,6 +37,8 @@ the arguments and return values of their counterparts (`hf::encode_polyline` and
 `hf::decode_polyline`):
 
 ``` r
+library(flexpolyline)
+
 line <- matrix(
   c(8.69821, 50.10228, 10,
     8.69567, 50.10201, 20,
@@ -53,31 +48,48 @@ line <- matrix(
 )
 
 encode(line)
+#> [1] "B1Voz5xJ67i1Bgkh9B1B7Pgkh9BzIhagkh9BxL7Ygkh9B"
 
-decode("BlBoz5xJ67i1BU1B7PUzIhaUxL7YU")
+decode("B1Voz5xJ67i1Bgkh9B1B7Pgkh9BzIhagkh9BxL7Ygkh9B")
+#>          LNG      LAT ELEVATION
+#> [1,] 8.69821 50.10228        10
+#> [2,] 8.69567 50.10201        20
+#> [3,] 8.69150 50.10063        30
+#> [4,] 8.68752 50.09878        40
 ```
 
-## Simple feature support
-A common way to deal with spatial data in R is the
-[sf](https://CRAN.R-project.org/package=sf) package, which is
+A common way to deal with spatial data in R is the **sf** package, which is
 built on the concept of simple features. The functions `encode_sf()` and
-`decode_sf()` provide an interface that support the encoding of sf objects:
+`decode_sf()` provide an interface that support the encoding of sf objects with
+geometry type `LINESTRING`:
 
 ``` r
 sfg <- sf::st_linestring(line, dim = "XYZ")
+print(sfg)
+#> LINESTRING Z (8.69821 50.10228 10, 8.69567 50.10201 20, 8.6915 50.10063 3...
 
 encode_sf(sfg)
+#> [1] "B1Voz5xJ67i1Bgkh9B1B7Pgkh9BzIhagkh9BxL7Ygkh9B"
 
-decode_sf("BlBoz5xJ67i1BU1B7PUzIhaUxL7YU")
+decode_sf("B1Voz5xJ67i1Bgkh9B1B7Pgkh9BzIhagkh9BxL7Ygkh9B", crs = 4326)
+#> Simple feature collection with 1 feature and 2 fields
+#> geometry type:  LINESTRING
+#> dimension:      XYZ
+#> bbox:           xmin: 8.68752 ymin: 50.09878 xmax: 8.69821 ymax: 50.10228
+#> z_range:        zmin: 10 zmax: 40
+#> geographic CRS: WGS 84
+#>   id      dim3                       geometry
+#> 1  1 ELEVATION LINESTRING Z (8.69821 50.10...
 ```
 
 ## References
 
-* [Flexible Polyline Encoding by HERE](https://github.com/heremaps/flexible-polyline)
+* [Flexible Polyline Encoding](https://github.com/heremaps/flexible-polyline)
 * [Simple Features for R](https://CRAN.R-project.org/package=sf)
-* Inspired by the [googlePolylines](https://github.com/SymbolixAU/googlePolylines) package
+* [flexpolyline R package](https://github.com/munterfinger/flexpolyline)
 
 ## License
 
 * The **flexpolyline** R package is licensed under GNU GPL v3.0.
-* The C++ implementation by HERE Europe B.V. is licensed under MIT.
+* The C++ implementation of the flexible polyline encoding by HERE Europe B.V.
+is licensed under MIT.
