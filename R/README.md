@@ -3,38 +3,36 @@
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/flexpolyline)](https://CRAN.R-project.org/package=flexpolyline)
+[![CRAN checks](https://cranchecks.info/badges/worst/flexpolyline)](https://cran.r-project.org/web/checks/check_results_flexpolyline.html)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/flexpolyline?color=brightgreen)](https://CRAN.R-project.org/package=flexpolyline)
-[![R build status](https://github.com/munterfinger/flexpolyline/workflows/R-CMD-check/badge.svg)](https://github.com/munterfinger/flexpolyline/actions)
 [![Codecov test coverage](https://codecov.io/gh/munterfinger/flexpolyline/branch/master/graph/badge.svg)](https://codecov.io/gh/munterfinger/flexpolyline?branch=master)
 <!-- badges: end -->
 
 The **[flexpolyline](https://CRAN.R-project.org/package=flexpolyline)** R package
-provides a binding to the
-[C++ implementation](https://github.com/heremaps/flexible-polyline/tree/master/cpp)
-of the flexible polyline encoding by HERE. The package is designed to
-interface with simple feature objects of the
-**[sf](https://CRAN.R-project.org/package=sf)** package. which are a common way to deal with spatial data in R.
-For detailed
-information on how to encode and decode polylines in R see the package
-[documentation](https://munterfinger.github.io/flexpolyline/index.html) or its
-[repository](https://github.com/munterfinger/flexpolyline) on GitHub.
+binds to the [C++ implementation](https://github.com/heremaps/flexible-polyline/tree/master/cpp)
+of the flexible polyline encoding by HERE. The package is designed to interface
+with simple features of the **[sf](https://CRAN.R-project.org/package=sf)** package,
+which is a common way of handling spatial data in R. For detailed information on
+encoding and decoding polylines in R, see the package
+[documentation](https://munterfinger.github.io/flexpolyline/index.html)
+or the [repository](https://github.com/munterfinger/flexpolyline) on GitHub.
 
 **Note:**
 * The order of the coordinates (lng, lat) does not correspond to the original
-C++ implementation (lat, lng). This enables simple conversion to simple feature
+C++ implementation (lat, lng). This enables direct conversion to simple feature
 objects without reordering the columns.
 * Decoding gives reliable results up to a precision of 7 digits.
 The package tests are also limited to this range.
 
 ## Get started
 
-Install the released version of **flexpolyline** from CRAN with:
+Install the released version of **flexpolyline** from CRAN:
 
 ``` r
 install.packages("flexpolyline")
 ```
 
-Encoding and decoding in R is straight forward by using `encode()` and `decode()`.
+Encoding and decoding in R is straightforward by using `encode()` and `decode()`.
 These functions are binding to the flexpolyline C++ implementation and reflect
 the arguments and return values of their counterparts (`hf::encode_polyline` and
 `hf::decode_polyline`):
