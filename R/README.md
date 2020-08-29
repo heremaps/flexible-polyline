@@ -4,6 +4,8 @@
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/flexpolyline)](https://CRAN.R-project.org/package=flexpolyline)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/flexpolyline?color=brightgreen)](https://CRAN.R-project.org/package=flexpolyline)
+[![R build status](https://github.com/munterfinger/flexpolyline/workflows/R-CMD-check/badge.svg)](https://github.com/munterfinger/flexpolyline/actions)
+[![Codecov test coverage](https://codecov.io/gh/munterfinger/flexpolyline/branch/master/graph/badge.svg)](https://codecov.io/gh/munterfinger/flexpolyline?branch=master)
 <!-- badges: end -->
 
 The **[flexpolyline](https://CRAN.R-project.org/package=flexpolyline)** R package
@@ -11,9 +13,10 @@ provides a binding to the
 [C++ implementation](https://github.com/heremaps/flexible-polyline/tree/master/cpp)
 of the flexible polyline encoding by HERE. The package is designed to
 interface with simple feature objects of the
-**[sf](https://CRAN.R-project.org/package=sf)** R package. For information on
-how to encode and decode polylines in R check the package
-[documentation](https://munterfinger.github.io/flexpolyline/index.html) or the
+**[sf](https://CRAN.R-project.org/package=sf)** package. which are a common way to deal with spatial data in R.
+For detailed
+information on how to encode and decode polylines in R see the package
+[documentation](https://munterfinger.github.io/flexpolyline/index.html) or its
 [repository](https://github.com/munterfinger/flexpolyline) on GitHub.
 
 **Note:**
@@ -85,11 +88,11 @@ decode_sf("B1Voz5xJ67i1Bgkh9B1B7Pgkh9BzIhagkh9BxL7Ygkh9B", crs = 4326)
 ## References
 
 * [Flexible Polyline Encoding](https://github.com/heremaps/flexible-polyline)
-* [Simple Features for R](https://CRAN.R-project.org/package=sf)
 * [flexpolyline R package](https://github.com/munterfinger/flexpolyline)
+* [Simple Features for R](https://CRAN.R-project.org/package=sf)
 
 ## License
 
-* The **flexpolyline** R package is licensed under GNU GPL v3.0.
 * The C++ implementation of the flexible polyline encoding by HERE Europe B.V.
 is licensed under MIT.
+* The **flexpolyline** R package is licensed under GNU GPL v3.0.
