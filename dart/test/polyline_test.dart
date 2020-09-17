@@ -93,18 +93,18 @@ void main() {
   });
 
   test('testThirdDimension', () {
-    expect(FlexiblePolyline.getThirdDimension("BFoz5xJ67i1BU"),
+    expect(FlexiblePolyline.getThirdDimension("BFoz5xJ67i1BU".split('')),
         equals(ThirdDimension.ABSENT));
-    expect(FlexiblePolyline.getThirdDimension("BVoz5xJ67i1BU"),
+    expect(FlexiblePolyline.getThirdDimension("BVoz5xJ67i1BU".split('')),
         equals(ThirdDimension.LEVEL));
-    expect(FlexiblePolyline.getThirdDimension("BlBoz5xJ67i1BU"),
+    expect(FlexiblePolyline.getThirdDimension("BlBoz5xJ67i1BU".split('')),
         equals(ThirdDimension.ALTITUDE));
-    expect(FlexiblePolyline.getThirdDimension("B1Boz5xJ67i1BU"),
+    expect(FlexiblePolyline.getThirdDimension("B1Boz5xJ67i1BU".split('')),
         equals(ThirdDimension.ELEVATION));
   });
 
   test('testDecodeConvertValue', () {
-    String encoded = "h_wqiB";
+    final encoded = "h_wqiB".split('');
     double expected = -179.98321;
     Converter conv = new Converter(5);
     Tuple2<double, int> result = conv.decodeValue(encoded, 0);
@@ -251,6 +251,7 @@ void main() {
       bool hasThirdDimension = false;
       ThirdDimension expectedDimension = ThirdDimension.ABSENT;
       String encodedLine = encoded[i].trim();
+      final splittedLine = encodedLine.split('');
       String decodedLine = decoded[i].trim();
 
       //File parsing
@@ -269,7 +270,7 @@ void main() {
 
       //Validate thirdDimension
       ThirdDimension computedDimension =
-          FlexiblePolyline.getThirdDimension(encodedLine);
+          FlexiblePolyline.getThirdDimension(splittedLine);
       expect(computedDimension, expectedDimension);
 
       //Validate LatLngZ
