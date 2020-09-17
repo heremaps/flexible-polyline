@@ -148,7 +148,7 @@ class FlexiblePolyline {
    * @param encoded URL-safe encoded coordinate triples {@link String}
    * @return type of {@link ThirdDimension}
    */
-  static ThirdDimension getThirdDimension(String encoded) {
+  static ThirdDimension getThirdDimension(List<String> encoded) {
     int index = 0;
     Tuple2<int, int> headerResult =
         _Decoder.decodeHeaderFromString(encoded, index);
@@ -164,6 +164,7 @@ class _Decoder {
   Converter latConverter;
   Converter lngConverter;
   Converter zConverter;
+  List<String> split;
 
   int precision;
   int thirdDimPrecision;
@@ -171,6 +172,7 @@ class _Decoder {
 
   _Decoder(this.encoded) {
     index = 0;
+    split = encoded.split('');
     _decodeHeader();
     latConverter = Converter(precision);
     lngConverter = Converter(precision);
@@ -181,7 +183,7 @@ class _Decoder {
 
   void _decodeHeader() {
     final Tuple2<int, int> headerResult =
-        decodeHeaderFromString(encoded, index);
+        decodeHeaderFromString(split, index);
     int header = headerResult.item1;
     index = headerResult.item2;
     precision = header & 15; // we pick the first 3 bits only
@@ -193,16 +195,16 @@ class _Decoder {
   }
 
   // Returns polyline header, new index in tuple.
-  static Tuple2<int, int> decodeHeaderFromString(String encoded, int index) {
+  static Tuple2<int, int> decodeHeaderFromString(List<String> encoded, int index) {
     // Decode the header version
     final Tuple2<int, int> result =
-        Converter.decodeUnsignedVarint(encoded.split(''), index);
+        Converter.decodeUnsignedVarint(encoded, index);
 
     if (result.item1 != FlexiblePolyline.version)
       throw ArgumentError("Invalid format version");
 
     // Decode the polyline header
-    return Converter.decodeUnsignedVarint(encoded.split(''), result.item2);
+    return Converter.decodeUnsignedVarint(encoded, result.item2);
   }
 
   LatLngZ decodeOne() {
@@ -210,14 +212,14 @@ class _Decoder {
       return null;
     }
     final Tuple2<double, int> latResult =
-        latConverter.decodeValue(encoded, index);
+        latConverter.decodeValue(split, index);
     index = latResult.item2;
     final Tuple2<double, int> lngResult =
-        lngConverter.decodeValue(encoded, index);
+        lngConverter.decodeValue(split, index);
     index = lngResult.item2;
     if (hasThirdDimension()) {
       final Tuple2<double, int> zResult =
-          zConverter.decodeValue(encoded, index);
+          zConverter.decodeValue(split, index);
       index = zResult.item2;
       return LatLngZ(latResult.item1, lngResult.item1, zResult.item1);
     }

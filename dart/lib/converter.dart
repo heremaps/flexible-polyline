@@ -48,9 +48,9 @@ class Converter {
 
   // Decode single coordinate (say lat|lng|z) starting at index
   // Returns decoded coordinate, new index in tuple
-  Tuple2<double, int> decodeValue(String encoded, int index) {
+  Tuple2<double, int> decodeValue(List<String> encoded, int index) {
     final Tuple2<int, int> result =
-        decodeUnsignedVarint(encoded.split(''), index);
+        decodeUnsignedVarint(encoded, index);
     double coordinate = 0;
     int delta = result.item1;
     if ((delta & 1) != 0) {
