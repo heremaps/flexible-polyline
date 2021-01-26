@@ -110,16 +110,16 @@ namespace HERE.FlexiblePolyline
         private class Encoder
         {
             private readonly StringBuilder _result;
-            private readonly Converter _latConveter;
-            private readonly Converter _lngConveter;
-            private readonly Converter _zConveter;
+            private readonly Converter _latConverter;
+            private readonly Converter _lngConverter;
+            private readonly Converter _zConverter;
             private readonly ThirdDimension _thirdDimension;
 
             public Encoder(int precision, ThirdDimension thirdDimension, int thirdDimPrecision)
             {
-                _latConveter = new Converter(precision);
-                _lngConveter = new Converter(precision);
-                _zConveter = new Converter(thirdDimPrecision);
+                _latConverter = new Converter(precision);
+                _lngConverter = new Converter(precision);
+                _zConverter = new Converter(thirdDimPrecision);
                 _thirdDimension = thirdDimension;
                 _result = new StringBuilder();
                 EncodeHeader(precision, (int)_thirdDimension, thirdDimPrecision);
@@ -150,8 +150,8 @@ namespace HERE.FlexiblePolyline
 
             private void Add(double lat, double lng)
             {
-                _latConveter.EncodeValue(lat, _result);
-                _lngConveter.EncodeValue(lng, _result);
+                _latConverter.EncodeValue(lat, _result);
+                _lngConverter.EncodeValue(lng, _result);
             }
 
             private void Add(double lat, double lng, double z)
@@ -159,7 +159,7 @@ namespace HERE.FlexiblePolyline
                 Add(lat, lng);
                 if (_thirdDimension != ThirdDimension.Absent)
                 {
-                    _zConveter.EncodeValue(z, _result);
+                    _zConverter.EncodeValue(z, _result);
                 }
             }
 
@@ -186,9 +186,9 @@ namespace HERE.FlexiblePolyline
         {
             private readonly char[] _encoded;
             private int _index;
-            private readonly Converter _latConveter;
-            private readonly Converter _lngConveter;
-            private readonly Converter _zConveter;
+            private readonly Converter _latConverter;
+            private readonly Converter _lngConverter;
+            private readonly Converter _zConverter;
 
             private int _precision;
             private int _thirdDimPrecision;
@@ -200,9 +200,9 @@ namespace HERE.FlexiblePolyline
                 _encoded = encoded.ToCharArray();
                 _index = 0;
                 DecodeHeader();
-                _latConveter = new Converter(_precision);
-                _lngConveter = new Converter(_precision);
-                _zConveter = new Converter(_thirdDimPrecision);
+                _latConverter = new Converter(_precision);
+                _lngConverter = new Converter(_precision);
+                _zConverter = new Converter(_thirdDimPrecision);
             }
 
             private bool HasThirdDimension()
@@ -255,19 +255,19 @@ namespace HERE.FlexiblePolyline
                     return false;
                 }
 
-                if (!_latConveter.DecodeValue(_encoded, ref _index, ref lat))
+                if (!_latConverter.DecodeValue(_encoded, ref _index, ref lat))
                 {
                     throw new ArgumentException("Invalid encoding");
                 }
 
-                if (!_lngConveter.DecodeValue(_encoded, ref _index, ref lng))
+                if (!_lngConverter.DecodeValue(_encoded, ref _index, ref lng))
                 {
                     throw new ArgumentException("Invalid encoding");
                 }
 
                 if (HasThirdDimension())
                 {
-                    if (!_zConveter.DecodeValue(_encoded, ref _index, ref z))
+                    if (!_zConverter.DecodeValue(_encoded, ref _index, ref z))
                     {
                         throw new ArgumentException("Invalid encoding");
                     }
