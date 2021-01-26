@@ -1,4 +1,4 @@
-﻿namespace FlexiblePolylineEncoder
+﻿namespace HERE.FlexiblePolyline
 {
     /// <summary>
     /// 3rd dimension specification.
