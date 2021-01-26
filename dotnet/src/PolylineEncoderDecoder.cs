@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FlexiblePolylineEncoder
+namespace HERE.FlexiblePolyline
 {
     public class PolylineEncoderDecoder
     {
@@ -42,7 +42,8 @@ namespace FlexiblePolylineEncoder
 
             if (!Enum.IsDefined(typeof(ThirdDimension), thirdDimension))
             {
-                thirdDimension = ThirdDimension.Absent;
+                throw new ArgumentException("Invalid thirdDimension");
+                //thirdDimension = ThirdDimension.Absent;
             }
 
             Encoder enc = new Encoder(precision, thirdDimension, thirdDimPrecision);
@@ -294,7 +295,7 @@ namespace FlexiblePolylineEncoder
         /// so that specific type delta is computed for encoding.
         /// Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)
         /// </summary>
-        private class Converter
+        public class Converter
         {
             private long _multiplier = 0;
             private long _lastValue = 0;
