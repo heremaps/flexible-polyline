@@ -1,0 +1,17 @@
+name: flexpolyline
+version: 1.0.0
+authors:
+ - David Phillips <david.phillips@nikolamotor.com>
+
+crystal: 0.34.0
+
+description: |
+  A lossy compressed representation of a list of coordinate pairs or coordinate triples in URL safe characters.
+
+license: MIT 
+
+repository: https://github.com/heremaps/flexible-polyline
+
+targets:
+  flex_polyline:
+    main: src/flex_polyline.cr

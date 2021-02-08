@@ -5,6 +5,7 @@ cpp/build
 [Bb]in
 [Dd]ebug*/
 obj/
+.vscode/
 *.suo
 .idea
 .vs
