@@ -6,12 +6,12 @@ authors:
 crystal: 0.34.0
 
 description: |
-  A lossy compressed representation of a list of coordinate pairs or coordinate triples in URL safe characters.
+  A URL character safe encoding of a list of Lat, Lng and optional Z values.
 
 license: MIT 
 
 repository: https://github.com/heremaps/flexible-polyline
 
 targets:
-  flex_polyline:
-    main: src/flex_polyline.cr
+  flexpolyline:
+    main: src/flexpolyline.cr

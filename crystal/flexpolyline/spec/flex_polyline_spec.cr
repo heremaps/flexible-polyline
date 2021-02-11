@@ -17,7 +17,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 require "spec"
-require "../src/flex_polyline.cr"
+require "../src/flexpolyline.cr"
 
 include PolylineEncoderDecoder
 
