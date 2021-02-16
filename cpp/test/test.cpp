@@ -5,167 +5,229 @@
  * License-Filename: LICENSE
  */
 #include <hf/flexpolyline.h>
-#include <sstream>
-#include <vector>
-#include <tuple>
 #include <iostream>
+#include <sstream>
+#include <tuple>
+#include <vector>
 
-template<typename T, typename S>
-void assert_eq(const T& lhs, const S& rhs) {
-    if (lhs != rhs) {
-        std::stringstream buf;
-        buf << lhs << " != " << rhs;
-        throw std::runtime_error(buf.str());
+using namespace hf::flexpolyline;
+
+void check_encode_decode(const Polyline &poly, const std::string &reference_encoded,
+                         const Polyline &reference_decoded) {
+  std::string result;
+  if (auto error = polyline_encode(poly, result)) {
+    std::cerr << "Failed to encode " << to_string(poly) << std::endl;
+    std::exit(1);
+  }
+  if (result != reference_encoded) {
+    std::cerr << "Encoded " << to_string(poly) << std::endl
+              << "Got " << result << std::endl
+              << "Expected " << reference_encoded << std::endl;
+    std::exit(1);
+  }
+
+  Polyline decoded;
+  if (auto error = polyline_decode(reference_encoded, decoded)) {
+    std::cerr << "Failed to decode " << reference_encoded << std::endl;
+    std::exit(1);
+  }
+
+  if (to_string(reference_decoded) != to_string(decoded)) {
+    std::cerr << "Decoded " << reference_encoded << std::endl
+              << "Got " << to_string(decoded) << std::endl
+              << "Expected " << to_string(poly) << std::endl;
+    std::exit(1);
+  }
+}
+
+void test_2d_example_1() {
+  std::vector<std::tuple<double, double>> coordinates = {{50.1022829, 8.6982122},
+                                                         {50.1020076, 8.6956695},
+                                                         {50.1006313, 8.6914960},
+                                                         {50.0987800, 8.6875156}};
+
+  std::vector<std::tuple<double, double>> coordinates_result = {
+      {50.102280, 8.698210}, {50.102010, 8.695670}, {50.100630, 8.691500}, {50.098780, 8.687520}};
+
+  check_encode_decode(Polyline2d{coordinates, *Precision::from_u32(5)}, "BFoz5xJ67i1B1B7PzIhaxL7Y",
+                      Polyline2d{coordinates_result, *Precision::from_u32(5)});
+}
+
+void test_2d_example_2() {
+  std::vector<std::tuple<double, double>> coordinates = {
+      {52.5199356, 13.3866272}, {52.5100899, 13.2816896}, {52.4351807, 13.1935196},
+      {52.4107285, 13.1964502}, {52.3887100, 13.1557798}, {52.3727798, 13.1491003},
+      {52.3737488, 13.1154604}, {52.3875198, 13.0872202}, {52.4029388, 13.0706196},
+      {52.4105797, 13.0755529}};
+
+  std::vector<std::tuple<double, double>> coordinates_result = {
+      {52.519940, 13.386630}, {52.510090, 13.281690}, {52.435180, 13.193520},
+      {52.410730, 13.196450}, {52.388710, 13.155780}, {52.372780, 13.149100},
+      {52.373750, 13.115460}, {52.387520, 13.087220}, {52.402940, 13.070620},
+      {52.410580, 13.075550}};
+
+  check_encode_decode(Polyline2d{coordinates, *Precision::from_u32(5)},
+                      "BF05xgKuy2xCx9B7vUl0OhnR54EqSzpEl-HxjD3pBiGnyGi2CvwFsgD3nD4vB6e",
+                      Polyline2d{coordinates_result, *Precision::from_u32(5)});
+}
+
+void test_3d_example_1() {
+  std::vector<std::tuple<double, double, double>> coordinates = {{50.1022829, 8.6982122, 10.0},
+                                                                 {50.1020076, 8.6956695, 20.0},
+                                                                 {50.1006313, 8.6914960, 30.0},
+                                                                 {50.0987800, 8.6875156, 40.0}};
+
+  std::vector<std::tuple<double, double, double>> coordinates_result = {
+      {50.102280, 8.698210, 10.0},
+      {50.102010, 8.695670, 20.0},
+      {50.100630, 8.691500, 30.0},
+      {50.098780, 8.687520, 40.0}};
+
+  check_encode_decode(
+      Polyline3d{coordinates, *Precision::from_u32(5), *Precision::from_u32(0), Type3d::LEVEL},
+      "BVoz5xJ67i1BU1B7PUzIhaUxL7YU",
+      Polyline3d{coordinates_result, *Precision::from_u32(5), *Precision::from_u32(0),
+                 Type3d::LEVEL});
+}
+
+void test_rounding_2d() {
+  std::vector<std::tuple<uint64_t, uint64_t>> coordinate_values = {
+      {96821474666297905, 78334196549606266}, {29405294060895017, 70361389340728572},
+      {16173544634348013, 17673855782924183}, {22448654820449524, 13005139703027850},
+      {73351231936757857, 78298027377720633}, {78008331957098324, 4847613123220218},
+      {62755680515396509, 49165433608990700}, {93297154866561429, 52373802822465027},
+      {89973844644540399, 75975762025877533}, {48555821719956867, 31591090068957813}};
+
+  for (uint32_t precision2d = 0; precision2d < 16; precision2d++) {
+    auto to_f64 = [](const std::tuple<uint64_t, uint64_t> &value) {
+      return std::make_tuple(static_cast<double>(std::get<0>(value)) / std::pow(10, 15),
+                             static_cast<double>(std::get<1>(value)) / std::pow(10, 15));
+    };
+
+    auto to_rounded_f64 = [&](const std::tuple<uint64_t, uint64_t> &input) {
+      auto value = to_f64(input);
+      auto scale = std::pow(10, precision2d);
+      return std::make_tuple(std::round(std::get<0>(value) * scale) / scale,
+                             std::round(std::get<1>(value) * scale) / scale);
+    };
+
+    Polyline2d expected;
+    expected.precision2d = *Precision::from_u32(precision2d);
+    for (auto coord : coordinate_values) {
+      expected.coordinates.emplace_back(to_rounded_f64(coord));
     }
-}
 
-void assert_true(bool value) {
-    if (!value) {
-        throw std::runtime_error("Assert failed");
+    Polyline2d actual;
+    actual.precision2d = *Precision::from_u32(precision2d);
+    for (auto coord : coordinate_values) {
+      actual.coordinates.emplace_back(to_f64(coord));
     }
-}
 
-
-void test_convert_value() {
-    std::string buf;
-    auto conv = encoder::Converter(5);
-    conv.encode_value(-179.98321, buf);
-    assert_eq(buf, "h_wqiB");
-}
-
-void test_get_third_dimension() {
-    assert_true(hf::get_third_dimension("BFoz5xJ67i1BU") == hf::ThirdDim::ABSENT);
-    assert_true(hf::get_third_dimension("BVoz5xJ67i1BU") == hf::ThirdDim::LEVEL);
-    assert_true(hf::get_third_dimension("BlBoz5xJ67i1BU") == hf::ThirdDim::ALTITUDE);
-    assert_true(hf::get_third_dimension("B1Boz5xJ67i1BU") == hf::ThirdDim::ELEVATION);
-}
-
-
-void test_encode1() {
-    std::vector<std::pair<double, double>> input{{
-        {50.1022829, 8.6982122},
-        {50.1020076, 8.6956695},
-        {50.1006313, 8.6914960},
-        {50.0987800, 8.6875156},
-    }};
-
-    const char* expected = "BFoz5xJ67i1B1B7PzIhaxL7Y";
-    assert_eq(hf::polyline_encode(input), expected);
-}
-
-void test_encode2() {
-    std::vector<std::pair<double, double>> input{{
-        {52.5199356, 13.3866272},
-        {52.5100899, 13.2816896},
-        {52.4351807, 13.1935196},
-        {52.4107285, 13.1964502},
-        {52.38871, 13.1557798},
-        {52.3727798, 13.1491003},
-        {52.3737488, 13.1154604},
-        {52.3875198, 13.0872202},
-        {52.4029388, 13.0706196},
-        {52.4105797, 13.0755529},
-    }};
-
-    const char* expected = "BF05xgKuy2xCx9B7vUl0OhnR54EqSzpEl-HxjD3pBiGnyGi2CvwFsgD3nD4vB6e";
-    assert_eq(hf::polyline_encode(input), expected);
-}
-
-void test_encode3() {
-    std::vector<std::tuple<double, double, double>> input{{
-        {50.1022829, 8.6982122, 10},
-        {50.1020076, 8.6956695, 20},
-        {50.1006313, 8.6914960, 30},
-        {50.0987800, 8.6875156, 40},
-    }};
-
-    const char* expected = "BlBoz5xJ67i1BU1B7PUzIhaUxL7YU";
-    assert_eq(hf::polyline_encode(input, 5, hf::ThirdDim::ALTITUDE), expected);
-}
-
-void test_decode1() {
-    std::vector<std::pair<double, double>> polyline;
-    auto res = hf::polyline_decode("BFoz5xJ67i1B1B7PzIhaxL7Y", [&polyline](double lat, double lng, double z) {
-        polyline.push_back({lat, lng});
-    });
-    assert_true(res);
-    std::vector<std::pair<double, double>> expected{{
-        {50.10228, 8.69821},
-        {50.10201, 8.69567},
-        {50.10063, 8.69150},
-        {50.09878, 8.68752},
-    }};
-
-    assert_eq(polyline.size(), expected.size());
-    for (size_t i = 0; i < polyline.size(); ++i) {
-        double delta_lat = std::abs(polyline[i].first - expected[i].first);
-        double delta_lng = std::abs(polyline[i].second - expected[i].second);
-        assert_true(delta_lat <= 0.000001);
-        assert_true(delta_lng <= 0.000001);
+    std::string expected_encoded;
+    if (auto error = polyline_encode(expected, expected_encoded)) {
+      std::cerr << "Failed to encode " << to_string(expected) << std::endl;
+      std::exit(1);
     }
-}
 
-void test_decode2() {
-    std::vector<std::pair<double, double>> polyline;
-    auto res = hf::polyline_decode("BF05xgKuy2xCx9B7vUl0OhnR54EqSzpEl-HxjD3pBiGnyGi2CvwFsgD3nD4vB6e", [&polyline](double lat, double lng, double z) {
-        polyline.push_back({lat, lng});
-    });
-    assert_true(res);
-    std::vector<std::pair<double, double>> expected{{
-        {52.51994, 13.38663},
-        {52.51009, 13.28169},
-        {52.43518, 13.19352},
-        {52.41073, 13.19645},
-        {52.38871, 13.15578},
-        {52.37278, 13.14910},
-        {52.37375, 13.11546},
-        {52.38752, 13.08722},
-        {52.40294, 13.07062},
-        {52.41058, 13.07555},
-    }};
-
-    assert_eq(polyline.size(), expected.size());
-    for (size_t i = 0; i < polyline.size(); ++i) {
-        double delta_lat = std::abs(polyline[i].first - expected[i].first);
-        double delta_lng = std::abs(polyline[i].second - expected[i].second);
-        assert_true(delta_lat <= 0.000001);
-        assert_true(delta_lng <= 0.000001);
+    std::string actual_encoded;
+    if (auto error = polyline_encode(actual, actual_encoded)) {
+      std::cerr << "Failed to encode " << to_string(actual) << std::endl;
+      std::exit(1);
     }
-}
 
-void test_decode3() {
-    std::vector<std::tuple<double, double, double>> polyline;
-    auto res = hf::polyline_decode("BlBoz5xJ67i1BU1B7PUzIhaUxL7YU", [&polyline](double lat, double lng, double z) {
-        polyline.push_back({lat, lng, z});
-    });
-    assert_true(res);
-    std::vector<std::tuple<double, double, double>> expected{{
-        {50.10228, 8.69821, 10},
-        {50.10201, 8.69567, 20},
-        {50.10063, 8.69150, 30},
-        {50.09878, 8.68752, 40},
-    }};
-
-    assert_eq(polyline.size(), expected.size());
-    for (size_t i = 0; i < polyline.size(); ++i) {
-        double delta_lat = std::abs(std::get<0>(polyline[i]) - std::get<0>(expected[i]));
-        double delta_lng = std::abs(std::get<1>(polyline[i]) - std::get<1>(expected[i]));
-        double delta_z = std::abs(std::get<2>(polyline[i]) - std::get<2>(expected[i]));
-        assert_true(delta_lat <= 0.000001);
-        assert_true(delta_lng <= 0.000001);
-        assert_true(delta_z <= 0.000001);
+    if (expected_encoded != actual_encoded) {
+      std::cerr << "Precision " << precision2d << std::endl
+                << "Expected " << expected_encoded << std::endl
+                << "Got " << actual_encoded << std::endl;
+      exit(1);
     }
+  }
 }
 
-int main(int argc, char const *argv[])
-{
-    test_convert_value();
-    test_encode1();
-    test_encode2();
-    test_encode3();
-    test_decode1();
-    test_decode2();
-    test_decode3();
-    test_get_third_dimension();
-    return 0;
+void test_rounding_3d() {
+  std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> coordinate_values = {
+      {96821474666297905, 78334196549606266, 23131023979661380},
+      {29405294060895017, 70361389340728572, 81917934930416924},
+      {16173544634348013, 17673855782924183, 86188502094968953},
+      {22448654820449524, 13005139703027850, 68774670569614983},
+      {73351231936757857, 78298027377720633, 52078352171243855},
+      {78008331957098324, 4847613123220218, 6550838806837986},
+      {62755680515396509, 49165433608990700, 39041897671300539},
+      {93297154866561429, 52373802822465027, 67310807938230681},
+      {89973844644540399, 75975762025877533, 66789448009436096},
+      {48555821719956867, 31591090068957813, 49203621966471323}};
+
+  uint32_t precision2d = 5;
+  for (uint32_t precision3d = 0; precision3d < 16; precision3d++) {
+    for (auto type3d : {
+             Type3d::LEVEL,
+             Type3d::ALTITUDE,
+             Type3d::ELEVATION,
+             Type3d::RESERVED1,
+             Type3d::RESERVED2,
+             Type3d::CUSTOM1,
+             Type3d::CUSTOM2,
+         }) {
+      auto to_f64 = [](const std::tuple<uint64_t, uint64_t, uint64_t> &value) {
+        return std::make_tuple(static_cast<double>(std::get<0>(value)) / std::pow(10, 15),
+                               static_cast<double>(std::get<1>(value)) / std::pow(10, 15),
+                               static_cast<double>(std::get<2>(value)) / std::pow(10, 15));
+      };
+
+      auto to_rounded_f64 = [&](const std::tuple<uint64_t, uint64_t, uint64_t> &input) {
+        auto value = to_f64(input);
+        auto scale2d = std::pow(10, precision2d);
+        auto scale3d = std::pow(10, precision3d);
+        return std::make_tuple(std::round(std::get<0>(value) * scale2d) / scale2d,
+                               std::round(std::get<1>(value) * scale2d) / scale2d,
+                               std::round(std::get<2>(value) * scale3d) / scale3d);
+      };
+
+      Polyline3d expected;
+      expected.precision2d = *Precision::from_u32(precision2d);
+      expected.precision3d = *Precision::from_u32(precision3d);
+      expected.type3d = type3d;
+      for (auto coord : coordinate_values) {
+        expected.coordinates.emplace_back(to_rounded_f64(coord));
+      }
+
+      Polyline3d actual;
+      actual.precision2d = *Precision::from_u32(precision2d);
+      actual.precision3d = *Precision::from_u32(precision3d);
+      actual.type3d = type3d;
+      for (auto coord : coordinate_values) {
+        actual.coordinates.emplace_back(to_f64(coord));
+      }
+
+      std::string expected_encoded;
+      if (auto error = polyline_encode(expected, expected_encoded)) {
+        std::cerr << "Failed to encode " << to_string(expected) << std::endl;
+        std::exit(1);
+      }
+
+      std::string actual_encoded;
+      if (auto error = polyline_encode(actual, actual_encoded)) {
+        std::cerr << "Failed to encode " << to_string(actual) << std::endl;
+        std::exit(1);
+      }
+
+      if (expected_encoded != actual_encoded) {
+        std::cerr << "Precision " << precision2d << std::endl
+                  << "Expected " << expected_encoded << std::endl
+                  << "Got " << actual_encoded << std::endl;
+        exit(1);
+      }
+    }
+  }
+}
+
+int main(int, char const *[]) {
+  std::cout << "Running tests" << std::endl;
+  test_2d_example_1();
+  test_2d_example_2();
+  test_3d_example_1();
+  test_rounding_2d();
+  test_rounding_3d();
+  std::cout << "Done" << std::endl;
+  return 0;
 }
