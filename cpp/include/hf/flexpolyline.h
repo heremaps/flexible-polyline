@@ -109,7 +109,7 @@ namespace encoder {
 
                     index++;
 
-                    delta |= (value & 0x1F) << shift;
+                    delta |= (static_cast<int64_t>(value) & 0x1F) << shift;
                     if ((value & 0x20) == 0) {
                         result = delta;
                         return true;
