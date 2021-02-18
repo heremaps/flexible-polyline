@@ -99,7 +99,7 @@ namespace encoder {
             bool inline static decode_unsigned_varint(const std::string& encoded, uint32_t& index, uint32_t length, int64_t& result) {
                 int64_t delta = 0;
                 short shift = 0;
-                int8_t value = 0;
+                int64_t value = 0;
 
                 while (index < length) {
                     value = decode_char(encoded[index]);
@@ -109,7 +109,8 @@ namespace encoder {
 
                     index++;
 
-                    delta |= (static_cast<int64_t>(value) & 0x1F) << shift;
+                    assert(value & 0x1F == value);
+                    delta |= value << shift;
                     if ((value & 0x20) == 0) {
                         result = delta;
                         return true;
@@ -118,10 +119,8 @@ namespace encoder {
                     }
                 }
 
-                if (shift > 0) {
-                    return false;
-                }
-                return true;
+                // It can happens when input index >= length or we are missed terminating 0b00000
+                return false;
             }
 
             bool decode_value(const std::string& encoded, uint32_t& index, uint32_t length, double& result) {
