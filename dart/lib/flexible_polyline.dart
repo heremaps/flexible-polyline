@@ -98,13 +98,13 @@ class FlexiblePolyline {
   /// @see FlexiblePolyline#getThirdDimension(String) getThirdDimension
   /// @see LatLngZ
   ///
-  static List<LatLngZ> decode(String encoded) {
+  static List<LatLngZ> decode(String? encoded) {
     if (encoded == null || encoded.trim().isEmpty) {
       throw ArgumentError("Invalid argument!");
     }
-    final List<LatLngZ> results = List<LatLngZ>();
+    final List<LatLngZ> results = [];
     final _Decoder dec = _Decoder(encoded);
-    LatLngZ result;
+    LatLngZ? result;
 
     do {
       result = dec.decodeOne();
@@ -127,8 +127,8 @@ class FlexiblePolyline {
   /// @param thirdDimPrecision Floating point precision for thirdDimension value
   /// @return URL-safe encoded {@link String} for the given coordinates.
   ///
-  static String encode(List<LatLngZ> coordinates, int precision,
-      ThirdDimension thirdDimension, int thirdDimPrecision) {
+  static String encode(List<LatLngZ>? coordinates, int precision,
+      ThirdDimension? thirdDimension, int thirdDimPrecision) {
     if (coordinates == null || coordinates.isEmpty) {
       throw ArgumentError("Invalid coordinates!");
     }
@@ -160,15 +160,15 @@ class FlexiblePolyline {
 /// Single instance for decoding an input request.
 class _Decoder {
   final String encoded;
-  int index;
-  Converter latConverter;
-  Converter lngConverter;
-  Converter zConverter;
-  List<String> split;
+  late int index;
+  late Converter latConverter;
+  late Converter lngConverter;
+  late Converter zConverter;
+  late List<String> split;
 
-  int precision;
-  int thirdDimPrecision;
-  ThirdDimension thirdDimension;
+  late int precision;
+  late int thirdDimPrecision;
+  late ThirdDimension thirdDimension;
 
   _Decoder(this.encoded) {
     index = 0;
@@ -182,8 +182,7 @@ class _Decoder {
   bool hasThirdDimension() => thirdDimension != ThirdDimension.ABSENT;
 
   void _decodeHeader() {
-    final Tuple2<int, int> headerResult =
-        decodeHeaderFromString(split, index);
+    final Tuple2<int, int> headerResult = decodeHeaderFromString(split, index);
     int header = headerResult.item1;
     index = headerResult.item2;
     precision = header & 15; // we pick the first 3 bits only
@@ -195,7 +194,8 @@ class _Decoder {
   }
 
   // Returns polyline header, new index in tuple.
-  static Tuple2<int, int> decodeHeaderFromString(List<String> encoded, int index) {
+  static Tuple2<int, int> decodeHeaderFromString(
+      List<String> encoded, int index) {
     // Decode the header version
     final Tuple2<int, int> result =
         Converter.decodeUnsignedVarint(encoded, index);
@@ -207,7 +207,7 @@ class _Decoder {
     return Converter.decodeUnsignedVarint(encoded, result.item2);
   }
 
-  LatLngZ decodeOne() {
+  LatLngZ? decodeOne() {
     if (index == encoded.length) {
       return null;
     }
@@ -218,8 +218,7 @@ class _Decoder {
         lngConverter.decodeValue(split, index);
     index = lngResult.item2;
     if (hasThirdDimension()) {
-      final Tuple2<double, int> zResult =
-          zConverter.decodeValue(split, index);
+      final Tuple2<double, int> zResult = zConverter.decodeValue(split, index);
       index = zResult.item2;
       return LatLngZ(latResult.item1, lngResult.item1, zResult.item1);
     }
@@ -233,9 +232,9 @@ class _Encoder {
   final int precision;
   final ThirdDimension thirdDimension;
   final int thirdDimPrecision;
-  Converter latConverter;
-  Converter lngConverter;
-  Converter zConverter;
+  late Converter latConverter;
+  late Converter lngConverter;
+  late Converter zConverter;
   String result = '';
 
   _Encoder(this.precision, this.thirdDimension, this.thirdDimPrecision) {
@@ -280,7 +279,7 @@ class _Encoder {
     }
   }
 
-  void add(LatLngZ tuple) {
+  void add(LatLngZ? tuple) {
     if (tuple == null) {
       throw ArgumentError("Invalid LatLngZ tuple");
     }
