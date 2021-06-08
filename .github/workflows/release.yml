@@ -2,6 +2,9 @@
 # https://stackoverflow.com/questions/45907185/github-release-a-specific-folder
 name: Create Release
 
+env: 
+  release_name: TODO-generate-release-name-from-changed-folder
+  
 on:
   # Triggers on changes and PRs to `master`
   push:
@@ -16,28 +19,48 @@ jobs:
   # This workflow contains a single job called "create_release"
   create_release:
     runs-on: ubuntu-latest
-
+      
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       # create a new branch
-      - uses: peterjgrainger/action-create-branch@v2.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          branch: 'TODO-generate-branch-name-from-changed-folder'
+      #- uses: peterjgrainger/action-create-branch@v2.0.1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    branch: ${{ release_name }}
 
       - name: Delete all except relevant folder
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # To do: figure out from version history
+          RELEASE_VERSION: 0.1.1
         run: |
-          git checkout 'TODO-generate-branch-name-from-changed-folder'
           CHANGED_FOLDERS=$(git log -1 --name-only --oneline HEAD~..HEAD | tail -n +2 | cut -d / -f 1 | sort | uniq)
           NUM_CHANGED=$(echo $CHANGED_FOLDERS | wc -l)
           if [ $NUM_CHANGED != "1" ]; then 
             echo "This only works when there is only one implementation changed; found $CHANGED_FOLDERS"
             exit 1
           fi
+          RELEASE_NAME="$CHANGED_FOLDERS-$RELEASE_VERSION"
+          git checkout -b branch-$RELEASE_NAME
           SUBFOLDERS=$(find . -maxdepth 1 -mindepth 1 \! -name '.??*' -type d)
           for FOLDER in $SUBFOLDERS; do
-            echo $FOLDER
+            if [ $(basename $FOLDER) != test -a $(basename $FOLDER) != $CHANGED_FOLDER ]; then 
+              echo rm -r $FOLDER
+            fi  
           done
+          git add .
+          git commit -m "Release $RELEASE_NAME"
+          git tag $release_name -m "Release $RELEASE_NAME"
+          git push origin branch-$RELEASE_NAME
+          git push origin $RELEASE_NAME          
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ RELEASE_NAME }}
+          release_name: Release ${{ RELEASE_NAME }}
+          body: ${{ steps.tag_version.outputs.changelog }}
