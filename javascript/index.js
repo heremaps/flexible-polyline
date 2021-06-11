@@ -27,7 +27,8 @@ const CUSTOM2 = 7;
 
 const Num = typeof BigInt !== "undefined" ? BigInt : Number;
 
-function decode(encoded) {
+function decode(encoded, params = {geojson: false}) {
+    const { geojson } = params
     const decoder = decodeUnsignedValues(encoded);
     const header = decodeHeader(decoder[0], decoder[1]);
 
@@ -46,14 +47,22 @@ function decode(encoded) {
         const deltaLng = toSigned(decoder[i + 1]) / factorDegree;
         lastLat += deltaLat;
         lastLng += deltaLng;
+        
+        let point
+        
+        if (geojson) {
+            point = [lastLng, lastLat]
+        } else {
+            point = [lastLat, lastLng]
+        }
 
         if (thirdDim) {
             const deltaZ = toSigned(decoder[i + 2]) / factorZ;
             lastZ += deltaZ;
-            res.push([lastLat, lastLng, lastZ]);
+            res.push([...point, lastZ]);
             i += 3;
         } else {
-            res.push([lastLat, lastLng]);
+            res.push(point);
             i += 2;
         }
     }
