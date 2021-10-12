@@ -10,3 +10,4 @@ obj/
 .vs
 
 *.user
+*.class
