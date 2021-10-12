@@ -109,7 +109,7 @@ public class PolylineEncoderDecoder {
     public static ThirdDimension getThirdDimension(String encoded) {
         AtomicInteger index = new AtomicInteger(0);
         AtomicLong header = new AtomicLong(0);
-        Decoder.decodeHeaderFromString(encoded, index, header);
+        Decoder.decodeHeaderFromString(encoded.toCharArray(), index, header);
         return ThirdDimension.fromNum((header.get() >> 4) & 7);
     }
     
@@ -186,7 +186,7 @@ public class PolylineEncoderDecoder {
      */
     private static class Decoder {
 
-        private final String encoded;
+        private final char[] encoded;
         private final AtomicInteger index; 
         private final Converter latConveter;
         private final Converter lngConveter;
@@ -198,7 +198,7 @@ public class PolylineEncoderDecoder {
 
 
         public Decoder(String encoded) {
-            this.encoded = encoded;
+            this.encoded = encoded.toCharArray();
             this.index = new AtomicInteger(0);
             decodeHeader();
             this.latConveter = new Converter(precision);
@@ -219,18 +219,18 @@ public class PolylineEncoderDecoder {
             thirdDimPrecision = (int) ((header.get() >> 3) & 15);
         }
         
-        private static void decodeHeaderFromString(String encoded, AtomicInteger index, AtomicLong header) {
+        private static void decodeHeaderFromString(char[] encoded, AtomicInteger index, AtomicLong header) {
             AtomicLong value = new AtomicLong(0);
 
             // Decode the header version
-            if(!Converter.decodeUnsignedVarint(encoded.toCharArray(), index, value)) {
+            if(!Converter.decodeUnsignedVarint(encoded, index, value)) {
                 throw new IllegalArgumentException("Invalid encoding");
             }
             if (value.get() != FORMAT_VERSION) {
                 throw new IllegalArgumentException("Invalid format version");
             }
             // Decode the polyline header
-            if(!Converter.decodeUnsignedVarint(encoded.toCharArray(), index, value)) {
+            if(!Converter.decodeUnsignedVarint(encoded, index, value)) {
                 throw new IllegalArgumentException("Invalid encoding");
             }
             header.set(value.get());
@@ -240,7 +240,7 @@ public class PolylineEncoderDecoder {
         private boolean decodeOne(AtomicReference<Double> lat,
                                   AtomicReference<Double> lng,
                                   AtomicReference<Double> z) {
-            if (index.get() == encoded.length()) {
+            if (index.get() == encoded.length) {
                 return false;
             }
             if (!latConveter.decodeValue(encoded, index, lat)) {
@@ -347,11 +347,11 @@ public class PolylineEncoderDecoder {
         }
 
         //Decode single coordinate (say lat|lng|z) starting at index
-        boolean decodeValue(String encoded,
+        boolean decodeValue(char[] encoded,
                             AtomicInteger index,
                             AtomicReference<Double> coordinate) {
             AtomicLong delta = new AtomicLong();
-            if (!decodeUnsignedVarint(encoded.toCharArray(), index, delta)) {
+            if (!decodeUnsignedVarint(encoded, index, delta)) {
                 return false;
             }
             if ((delta.get() & 1) != 0) {
@@ -361,6 +361,13 @@ public class PolylineEncoderDecoder {
             lastValue += delta.get();
             coordinate.set(((double)lastValue / multiplier));
             return true;
+        }
+
+        // Overloaded version for backwards compatibility
+        boolean decodeValue(String encoded,
+                            AtomicInteger index,
+                            AtomicReference<Double> coordinate) {
+            return decodeValue(encoded.toCharArray(), index, coordinate);
         }
 	}
 	
