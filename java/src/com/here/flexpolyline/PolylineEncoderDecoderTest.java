@@ -350,7 +350,7 @@ public class PolylineEncoderDecoderTest {
     }
 
     public static void main(String[] args) {
-        final int DEFAULT_LINE_LENGTH = 100000;
+        final int DEFAULT_LINE_LENGTH = 1000;
         int lineLength = DEFAULT_LINE_LENGTH;
         if (args.length > 0) {
             lineLength = Integer.parseInt(args[0]);
