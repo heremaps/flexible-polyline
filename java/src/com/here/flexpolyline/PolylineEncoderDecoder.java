@@ -188,9 +188,9 @@ public class PolylineEncoderDecoder {
 
         private final char[] encoded;
         private final AtomicInteger index; 
-        private final Converter latConveter;
-        private final Converter lngConveter;
-        private final Converter zConveter;
+        private final Converter latConverter;
+        private final Converter lngConverter;
+        private final Converter zConverter;
         
         private int precision;
         private int thirdDimPrecision;
@@ -201,9 +201,9 @@ public class PolylineEncoderDecoder {
             this.encoded = encoded.toCharArray();
             this.index = new AtomicInteger(0);
             decodeHeader();
-            this.latConveter = new Converter(precision);
-            this.lngConveter = new Converter(precision);
-            this.zConveter = new Converter(thirdDimPrecision);
+            this.latConverter = new Converter(precision);
+            this.lngConverter = new Converter(precision);
+            this.zConverter = new Converter(thirdDimPrecision);
         }
 
         private boolean hasThirdDimension() {
@@ -243,14 +243,14 @@ public class PolylineEncoderDecoder {
             if (index.get() == encoded.length) {
                 return false;
             }
-            if (!latConveter.decodeValue(encoded, index, lat)) {
+            if (!latConverter.decodeValue(encoded, index, lat)) {
                 throw new IllegalArgumentException("Invalid encoding");
             }
-            if (!lngConveter.decodeValue(encoded, index, lng)) {
+            if (!lngConverter.decodeValue(encoded, index, lng)) {
                 throw new IllegalArgumentException("Invalid encoding");
             }
             if (hasThirdDimension()) {
-                if (!zConveter.decodeValue(encoded, index, z)) {
+                if (!zConverter.decodeValue(encoded, index, z)) {
                     throw new IllegalArgumentException("Invalid encoding");
                 }
             }
