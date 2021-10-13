@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -130,7 +131,6 @@ public class PolylineEncoderDecoderTest {
         assertTrue(getThirdDimension("B1Boz5xJ67i1BU") == ELEVATION);
     }
 
-    
     private void testDecodeConvertValue() {
 
         String encoded = "h_wqiB";
@@ -284,6 +284,21 @@ public class PolylineEncoderDecoderTest {
         }
     }
 
+    private void testVeryLongLine(int lineLength) {
+        final int PRECISION = 10;
+        Random random = new Random();
+        List<LatLngZ> coordinates = new ArrayList<LatLngZ>();
+        for (int i = 0; i <= lineLength; i++) {
+            LatLngZ nextPoint = new LatLngZ(random.nextDouble(), random.nextDouble(), random.nextDouble());
+            coordinates.add(nextPoint);
+        }
+        String encoded = encode(coordinates, PRECISION, ThirdDimension.ALTITUDE, PRECISION);
+        long startTime = System.nanoTime();
+        List<LatLngZ> decoded = decode(encoded);
+        long duration = (System.nanoTime() - startTime);
+        System.out.println("duration: " + duration/1000 + "us");
+    }
+
     private static List<LatLngZ> extractLatLngZ(String line, boolean hasThirdDimension) {
         List<LatLngZ> latLngZs = new ArrayList<LatLngZ>();
 
@@ -335,6 +350,12 @@ public class PolylineEncoderDecoderTest {
     }
 
     public static void main(String[] args) {
+        final int DEFAULT_LINE_LENGTH = 100000;
+        int lineLength = DEFAULT_LINE_LENGTH;
+        if (args.length > 0) {
+            lineLength = Integer.parseInt(args[0]);
+        }
+
         PolylineEncoderDecoderTest test = new PolylineEncoderDecoderTest();
         test.testInvalidCoordinates();
         test.testInvalidThirdDimension();
@@ -352,5 +373,7 @@ public class PolylineEncoderDecoderTest {
         test.testComplexLatLngDecoding();
         test.testLatLngZDecode();
         test.decodingSmokeTest();
+
+        test.testVeryLongLine(lineLength);
     }
 }
