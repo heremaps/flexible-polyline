@@ -1,7 +1,7 @@
 % Decodes flexible polyline from HERE API 
 % (Quick and dirty, don't complain...)
 % ------------------------------------------------------------------------------------------------------------
-% Input: polyline
+% Input: polyline (returned from HERE API)
 % Output: struct
 % ------------------------------------------------------------------------------------------------------------
 % Reno Filla, NEPP, Scania R&D, created 2021-10-29, last updated 2021-10-29
