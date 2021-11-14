@@ -1,0 +1,1 @@
+Function for Matlab to decode HERE version of flexpolyline 
