@@ -1,1 +1,1 @@
-Function for Matlab to decode HERE version of flexpolyline 
+Functions for Matlab to encode and decode HERE's flexible polyline 

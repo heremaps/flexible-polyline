@@ -1,5 +1,5 @@
 % Decodes flexible polyline from HERE API 
-% (Quick and dirty, don't complain...)
+% (Quick and possibly dirty, it works but suggestions for improvement are always welcome)
 % ------------------------------------------------------------------------------------------------------------
 % Input: polyline (returned from HERE API)
 % Output: struct
@@ -9,6 +9,7 @@
 
 
 function out = function_decode_flexpolyline_HERE (polyline)       
+% Documentation of how to encode a flexible polyline: https://github.com/heremaps/flexible-polyline
 
     out = struct;
     decoding_table = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
