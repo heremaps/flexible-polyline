@@ -1,5 +1,4 @@
 % Decodes flexible polyline from HERE API 
-% (Quick and possibly dirty, it works but suggestions for improvement are always welcome)
 % ------------------------------------------------------------------------------------------------------------
 % Input: polyline (returned from HERE API)
 % Output: struct

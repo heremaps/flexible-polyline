@@ -1,5 +1,4 @@
-% Encodes lexible polyline from HERE API
-% (Quick and possibly dirty, don't complain... it works)
+% Encodes flexible polyline from HERE API
 % ------------------------------------------------------------------------------------------------------------
 % Input 1: matrix with either 2 columns containing (lat,lon) values or 3 columns containing (lat,lon,3rd_dim)
 % Input 2: optional arguments: 'Precision': set precision of (lat,lon) values, default is 5
