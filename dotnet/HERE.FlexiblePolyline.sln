@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29911.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HERE.FlexiblePolyline", "src\HERE.FlexiblePolyline.csproj", "{43B7F4E7-7D7D-4FE9-A6AB-ACF6F4760975}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlexiblePolylineEncoder.Tests", "test\FlexiblePolylineEncoder.Tests\FlexiblePolylineEncoder.Tests.csproj", "{58A3B4E0-A356-493F-AAD1-0BB7C8FE4D5C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{43B7F4E7-7D7D-4FE9-A6AB-ACF6F4760975}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43B7F4E7-7D7D-4FE9-A6AB-ACF6F4760975}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43B7F4E7-7D7D-4FE9-A6AB-ACF6F4760975}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43B7F4E7-7D7D-4FE9-A6AB-ACF6F4760975}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58A3B4E0-A356-493F-AAD1-0BB7C8FE4D5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58A3B4E0-A356-493F-AAD1-0BB7C8FE4D5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58A3B4E0-A356-493F-AAD1-0BB7C8FE4D5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58A3B4E0-A356-493F-AAD1-0BB7C8FE4D5C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CBF7FB00-A4E8-4249-A71C-41043293767D}
+	EndGlobalSection
+EndGlobal
