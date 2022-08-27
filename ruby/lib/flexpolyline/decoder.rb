@@ -1,15 +1,21 @@
 # frozen_string_literal: true
 
 module FlexPolyline
+  # A class to keep the header information.
+  # @attr precision [Integer] the precision of the latitude and longitude.
+  # @attr third_dim [Integer] the type of the third dimension. Possible values are: ABSENT, LEVEL, ALTITUDE, ELEVATION, CUSTOM1, CUSTOM2.
+  # @attr third_dim_precision [Integer] the precision of the third dimension.
+  PolylineHeader = Struct.new(:precision, :third_dim, :third_dim_precision)
+
+  # The decoder class handles the decoding of a polyline string.
   class Decoder
+    # A constant containing the decoding table.
     DECODING_TABLE = [
       62, -1, -1, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1,
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
       22, 23, 24, 25, -1, -1, -1, -1, 63, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
       36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
     ].freeze
-
-    PolylineHeader = Struct.new(:precision, :third_dim, :third_dim_precision)
 
     def initialize(encoded, format: :array)
       @encoded = encoded
@@ -20,23 +26,41 @@ module FlexPolyline
     #
     # @return [Array<Array<Float>>, Array<Hash>] the decoded polyline
     def decode
-      decoder = enum_decode
+      decode_each.to_a
+    end
+
+    # Decodes a polyline string into a sequence of [lat, lng] or [lat, lng ,third_dim]. It yields each decoded block or returns an enumerator.
+    #
+    # @yield [[Array<Numeric>, Hash]]
+    # @return [Enumerator<Array<Numeric>>, Enumerator<Hash>]
+    def decode_each(&block)
+      return to_enum(:decode_each) unless block_given?
+
       if @format == :array
-        decoder.to_a
+        yield_decode(&block)
       else
         key = THIRD_DIM_MAP[third_dimension]
-        decoder.map do |(lat, lng, third)|
-          key ? { lat: lat, lng: lng, key => third } : { lat: lat, lng: lng }
+
+        yield_decode do |(lat, lng, third)|
+          yield key ? { lat: lat, lng: lng, key => third } : { lat: lat, lng: lng }
         end
       end
     end
 
-    # Decode an encoded polyline
+    # Return the third dimension of an encoded polyline.
+    # Possible returned values are: ABSENT, LEVEL, ALTITUDE, ELEVATION, CUSTOM1, CUSTOM2.
     #
-    # @yield [lat, lng, alt] the decoded coordinates
-    def enum_decode
-      return to_enum(:enum_decode) unless block_given?
+    # @return [Integer] the third dimension
+    def third_dimension
+      decode_header(decode_unsigned_values(@encoded)).third_dim
+    end
 
+    private
+
+    # Decode an encoded polyline and yields each point
+    #
+    # @yield [Array<Numeric>] the decoded point
+    def yield_decode
       last_lat = last_lng = last_z = 0
       decoder = decode_unsigned_values(@encoded)
 
@@ -63,20 +87,10 @@ module FlexPolyline
             yield [last_lat / factor_degree, last_lng / factor_degree]
           end
         rescue StopIteration
-          raise ValueError, 'Invalid encoding. Premature ending reached'
+          raise ArgumentError, 'Invalid encoding. Premature ending reached'
         end
       end
     end
-
-    # Return the third dimension of an encoded polyline.
-    # Possible returned values are: ABSENT, LEVEL, ALTITUDE, ELEVATION, CUSTOM1, CUSTOM2.
-    #
-    # @return [Integer] the third dimension
-    def third_dimension
-      decode_header(decode_unsigned_values(@encoded)).third_dim
-    end
-
-    private
 
     # Return an iterator over encoded unsigned values part of an `encoded` polyline
     #
@@ -98,7 +112,7 @@ module FlexPolyline
         end
       end
 
-      raise ValueError, 'Invalid encoding' if shift.positive?
+      raise ArgumentError, 'Invalid encoding' if shift.positive?
     end
 
     # Returns a PolylineHeader
@@ -107,7 +121,7 @@ module FlexPolyline
     # @return [PolylineHeader] the header
     def decode_header(decoder)
       version = decoder.next
-      raise ValueError, 'Invalid format version' if version != FORMAT_VERSION
+      raise ArgumentError, 'Invalid format version' if version != FORMAT_VERSION
 
       value = decoder.next
       precision = value & 15
@@ -125,7 +139,7 @@ module FlexPolyline
       char_value = char.ord
       value = DECODING_TABLE[char_value - 45]
 
-      raise ValueError('Invalid encoding') if value.nil? || value.negative?
+      raise ArgumentError, 'Invalid encoding' if value.nil? || value.negative?
 
       value
     end

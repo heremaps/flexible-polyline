@@ -71,14 +71,14 @@ describe FlexPolyline do
   it 'fails with invalid encoding' do
     expect do
       described_class.decode('BFoz5xJ67i1B1B7PzIhaxL7')
-    end.to raise_error(described_class::ValueError)
+    end.to raise_error(ArgumentError)
 
     expect do
       described_class.decode('CFoz5xJ67i1B1B7PzIhaxL7')
-    end.to raise_error(described_class::ValueError)
+    end.to raise_error(ArgumentError)
   end
 
-  it 'enum decoding' do
+  it 'decoding each' do
     expected = [
       [50.10228, 8.69821],
       [50.10201, 8.69567],
@@ -86,7 +86,7 @@ describe FlexPolyline do
       [50.09878, 8.68752]
     ]
 
-    described_class.enum_decode('BFoz5xJ67i1B1B7PzIhaxL7Y').with_index do |row, i|
+    described_class.decode_each('BFoz5xJ67i1B1B7PzIhaxL7Y').with_index do |row, i|
       expect(row[0]).to be_within(0.000001).of(expected[i][0])
       expect(row[1]).to be_within(0.000001).of(expected[i][1])
     end

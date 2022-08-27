@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
 module FlexPolyline
+  # The Encoder class handles the encoding of a sequence of [lat, lng] or [lat, lng ,third_dim].
   class Encoder
+    # A constant with the encoding table.
     ENCODING_TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 
-    # @param coordinates [Array<Array<Integer>>]
+    # @param coordinates [Array<Array<Numeric>>, Array<Hash>] the coordinates to encode.
     # @param precision [Integer] how many decimal digits of precision to store the latitude and longitude.
     # @param third_dim [Integer] type of the third dimension if present in the input.
     # @param third_dim_precision [Integer] how many decimal digits of precision to store the third dimension.
+    # @param format [Symbol] the format. Acceptable values: :hash, :array.
     def initialize(coordinates, precision: 5, third_dim: ABSENT, third_dim_precision: 0, format: :array)
       @coordinates = parse_coordinates(coordinates, format: format, third_dim: third_dim)
       @precision = precision
@@ -18,6 +21,9 @@ module FlexPolyline
     # Encode a sequence of lat,lng or lat,lng(,third_dim).
     #
     # @return [String]
+    # @raise [ArgumentError] if the `precision` is not in the range [0, 15]
+    # @raise [ArgumentError] if the `third_dim_precision` is not in the range [0, 15]
+    # @raise [ArgumentError] if the `third_dim` is not in the range [0, 7]
     def encode
       multiplier_degree = 10**@precision
       multiplier_z = 10**@third_dim_precision
@@ -49,6 +55,12 @@ module FlexPolyline
 
     private
 
+    # Parse the coordinates into an array of arrays.
+    #
+    # @param coordinates [Array<Array<Numeric>>, Array<Hash>]
+    # @param format [Symbol] the format. Acceptable values: :hash, :array.
+    # @param third_dim [Integer] type of the third dimension if present in the input.
+    # @return [Array<Array<Numeric>>]
     def parse_coordinates(coordinates, format: :array, third_dim: ABSENT)
       return coordinates if format == :array
 
@@ -65,7 +77,6 @@ module FlexPolyline
 
     # Uses veriable integer encoding to encode an unsigned integer.
     #
-    # Returns the encoded string.
     # @param value [Integer]
     # @param appender [Proc]
     def encode_unsigned_varint(value, appender)
@@ -91,17 +102,23 @@ module FlexPolyline
       encode_unsigned_varint(value, appender)
     end
 
-    # Encode the `precision`, `third_dim` and `third_dim_precision` into one
-    # encoded char
+    # Encode the `precision`, `third_dim` and `third_dim_precision` into one encoded char
     #
     # @param appender [Proc]
     # @param precision [Integer]
     # @param third_dim [Integer]
     # @param third_dim_precision [Integer]
+    # @raise [ArgumentError] if the `precision` is not in the range [0, 15]
+    # @raise [ArgumentError] if the `third_dim_precision` is not in the range [0, 15]
+    # @raise [ArgumentError] if the `third_dim` is not in the range [0, 7]
     def encode_header(appender, precision, third_dim, third_dim_precision)
-      raise ValueError, 'precision out of range' if precision.negative? || precision > 15
-      raise ValueError, 'third_dim_precision out of range' if third_dim_precision.negative? || third_dim_precision > 15
-      raise ValueError, 'third_dim out of range' if third_dim.negative? || third_dim > 7
+      raise ArgumentError, 'precision out of range' if precision.negative? || precision > 15
+
+      if third_dim_precision.negative? || third_dim_precision > 15
+        raise ArgumentError,
+              'third_dim_precision out of range'
+      end
+      raise ArgumentError, 'third_dim out of range' if third_dim.negative? || third_dim > 7
 
       if [4, 5].include?(third_dim)
         FlexPolyline.logger.warn('Third dimension types 4 and 5 are reserved and should not be used ' \

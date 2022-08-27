@@ -82,9 +82,9 @@ Decodes the passed encoded string and returns a list of arrays `[lat, lng[, thir
 
 When the format is a hash, the keys `"lat"` and `"lng"` are always present, while the third dimension key depends on the type of third dimension encoded. It can be one of the following: `:alt`, `:elv`, `:lvl`, `:cst1` or `:cst2`.
 
-#### `FlexPolyline.iter_decode(encoded_string)`
+#### `FlexPolyline.decode_each(encoded_string)`
 
-Similar to `decode` but returns an Enumerator instead.
+Similar to `decode`, but yields every decoded point instead, or returns an Enumerator if no block is given.
 
 #### `FlexPolyline.third_dimension(encoded_string)`
 
