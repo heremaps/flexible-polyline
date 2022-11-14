@@ -133,6 +133,76 @@ B F oz5xJ 67i1B 1B 7P zI ha xL 7Y
 * The second letter `F` is the header, corresponding to the precision 5 and no 3rd dimension set.
 * The rest of the string are the encoded coordinates.
 
+## Pseudocode
+
+The following pseudocode illustrates the steps needed to decode an encoded string and
+might also be a helpful template for an actual implementation.
+The main function to implement is taking the encoded coordinates (characters after
+the 2 header characters) as input and returns the sequence of signed integer values.
+
+```commandline
+function decode_coordinates_to_signed_values
+    input: encoded_coordinates (= encoded string without 2 header bits)
+    output: sequence of signed integer values
+
+    values := array()
+    next_value := 0
+    shift := 0
+    for character in encoded_coordinates
+        chunk := index_of_character_in_character_set(character)
+        is_last_chunk := (chunk & 0x20) == 0
+        chunk_value := chunk & 0x1F
+
+        # prepend the chunk value to next_value:
+        next_value := (chunk_value << shift) | next_value
+        shift := shift + 5
+
+        if is_last_chunk
+            # Convert chunk_value to a signed integer:
+            if next_value & 1 == 1  # if first bit is 1, value is negative
+                signed_value := - ((next_value + 1) >> 1)
+            else
+                signed_value := next_value >> 1
+            end_if
+            values.append(signed_value)
+            next_value := 0
+            shift := 0
+        end_if
+
+    end_for
+
+    return values
+
+end_function
+```
+
+Given the function above all that remains to be done is to group the returned sequence into
+tuples of size 2 or 3 and convert them into floats given the precision defined in the header.
+
+This is the pseudocode for the case of a 2d polyline:
+
+```commandline
+function decode_flexpolyline_2d
+    input: encoded_coordinates  # the characters after header version and content characters
+           precision  # integer with number decimal of digits
+    output: array of (lat, lon) coordinate tuples
+
+    values := decode_coordinates_to_signed_values(encoded_coordinates)
+
+    coordinates := array()
+    lat := 0
+    lon := 0
+    for i in [0, 1, ... length(values) / 2]
+        lat := lat + values[2 * i]
+        lon := lon + values[2 * i + 1]
+        coordinates.append(Tuple(lat / 10 ** precision, lon / 10 ** precision))
+    end_for
+
+    return coordinates
+
+end_function
+```
+
 ## My favorite language is not supported. What now?
 
 Feel free to contribute an implementation. You can either use C-bindings, or
@@ -166,6 +236,11 @@ Format of the unencoded data is:
 Floating point numbers are printed with 15 digits decimal precision. Be aware that encoding is 
 lossy: Decoding an encoded polyline will not always yield the original, and neither will encoding a 
 decoded polyline result in the same encoded representation.
+
+### Implementation hints:
+
+* 32-bit floats and integers are not sufficient for encodings with high precision,
+use 64-bits instead
 
 ## TODO
 
