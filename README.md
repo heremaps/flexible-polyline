@@ -136,20 +136,77 @@ B F oz5xJ 67i1B 1B 7P zI ha xL 7Y
 ## Pseudocode
 
 The following pseudocode illustrates the steps needed to decode an encoded string and
-might also be a helpful template for an actual implementation.
-The main function to implement is taking the encoded coordinates (characters after
-the 2 header characters) as input and returns the sequence of signed integer values.
+might also be a helpful template for an actual implementation. Note that error handling
+is not taken care of in the code.
+
+The first function that is needed for a decoder is retuning the index of a single
+character in the character set. E.g. for the first character 'A' it should return 0.
+
+This can be implemented in an efficient way by converting the character into its
+ASCII-code and using this as an index in a decoding table.
+E.g. for the character 'A' the ASCII code is 65, so the decoding table should be
+initialized with a 0 at this index.
 
 ```commandline
-function decode_coordinates_to_signed_values
-    input: encoded_coordinates (= encoded string without 2 header bits)
+function decode_integer
+    input: a character from the encoded string
+    output: the index of the character in the character set
+
+    DECODING_TABLE := [
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, 62, -1, -1, 52, 53,
+        54, 55, 56, 57, 58, 59, 60, 61, -1, -1,
+        -1, -1, -1, -1, -1,  0,  1,  2,  3,  4,
+         5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+        25, -1, -1, -1, -1, 63, -1, 26, 27, 28,
+        29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+        39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+        49, 50, 51
+    ]
+
+    return DECODING_TABLE[asci_code(charater)]
+
+end_function
+```
+
+Now the decoding of the first two header bytes can be implemented:
+
+```commandline
+function decode_header
+    input: encoded_string
+    output: a tuple of 3 values (precision_2d, type_3d, precision_3d)
+
+    header_version = decode_integer(encoded_string[0])
+    header_content = decode_integer(encoded_string[1])
+
+    precision_2d = header_content & 0xF
+    type_3d = (header_content >> 4) & 0x7
+    precision_3d = (header_content >> 7) & 0xF
+
+    return Tuple(precision_2d, type_3d, precision_3d)
+
+end_function
+```
+
+After the two header bytes the encoded coordinates start. More precisely,
+the sequence of signed coordinate deltas in integer space.
+
+The function below decodes these bytes into a sequence of signed integer values:
+
+```commandline
+function decode_signed_deltas
+    input: encoded_deltas (= encoded string without first two header bytes)
     output: sequence of signed integer values
 
     values := array()
     next_value := 0
     shift := 0
-    for character in encoded_coordinates
-        chunk := index_of_character_in_character_set(character)
+    for character in encoded_deltas
+        chunk := decode_integer(character)
         is_last_chunk := (chunk & 0x20) == 0
         chunk_value := chunk & 0x1F
 
@@ -183,19 +240,19 @@ This is the pseudocode for the case of a 2d polyline:
 
 ```commandline
 function decode_flexpolyline_2d
-    input: encoded_coordinates  # the characters after header version and content characters
-           precision  # integer with number decimal of digits
+    input: encoded_deltas  # (= encoded string without first two header bytes)
+           precision_2d       # integer with number of decimal digits
     output: array of (lat, lon) coordinate tuples
 
-    values := decode_coordinates_to_signed_values(encoded_coordinates)
+    deltas := decode_signed_deltas(encoded_coordinates)
 
     coordinates := array()
     lat := 0
     lon := 0
-    for i in [0, 1, ... length(values) / 2]
-        lat := lat + values[2 * i]
-        lon := lon + values[2 * i + 1]
-        coordinates.append(Tuple(lat / 10 ** precision, lon / 10 ** precision))
+    for i in [0, 1, ... length(deltas) / 2]
+        lat := lat + deltas[2 * i]
+        lon := lon + deltas[2 * i + 1]
+        coordinates.append(Tuple(lat / 10 ** precision_2d, lon / 10 ** precision_2d))
     end_for
 
     return coordinates
