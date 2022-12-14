@@ -17,11 +17,10 @@ import static com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension.LEVEL;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.here.flexpolyline.PolylineEncoderDecoder.Converter;
 import com.here.flexpolyline.PolylineEncoderDecoder.LatLngZ;
@@ -135,12 +134,9 @@ public class PolylineEncoderDecoderTest {
 
         String encoded = "h_wqiB";
         double expected = -179.98321;
-        AtomicReference<Double> computed = new AtomicReference<>(0d);
         Converter conv = new Converter(5);
-        conv.decodeValue(encoded,
-                         new AtomicInteger(0),
-                         computed);
-        assertEquals(computed.get(), expected);
+        final double computed = conv.decodeValue(new StringCharacterIterator(encoded));
+        assertEquals(computed, expected);
     }
     
     
