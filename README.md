@@ -168,7 +168,7 @@ function decode_integer
         49, 50, 51
     ]
 
-    return DECODING_TABLE[asci_code(charater)]
+    return DECODING_TABLE[asci_code(character)]
 
 end_function
 ```
