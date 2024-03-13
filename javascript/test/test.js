@@ -9,8 +9,8 @@ const assert = require('assert');
 const fs = require('fs');
 
 const originalLines = fs.readFileSync('../test/original.txt', { encoding: 'utf-8' }).split('\n');
-const encodedLines = fs.readFileSync('../test/encoded.txt', { encoding: 'utf-8' }).split('\n');
-const decodedLines = fs.readFileSync('../test/decoded.txt', { encoding: 'utf-8' }).split('\n');
+const encodedLines = fs.readFileSync('../test/round_half_even/encoded.txt', { encoding: 'utf-8' }).split('\n');
+const decodedLines = fs.readFileSync('../test/round_half_even/decoded.txt', { encoding: 'utf-8' }).split('\n');
 
 function runTests() {
     originalLines.forEach((original, index) => {
@@ -29,9 +29,10 @@ function runTests() {
 
         const expectedDecoded = parseLine(decoded);
         const resDecoded = poly.decode(encodedInput);
+
         assert.strictEqual(resDecoded.precision, expectedDecoded.precision);
-        assert.strictEqual(resDecoded.thirdDim, expectedDecoded.thirdDim || 0);
-        assert.strictEqual(resDecoded.thirdDimPrecision, expectedDecoded.thirdDimPrecision);
+        assert.strictEqual(resDecoded.thirdDim, expectedDecoded.thirdDim ?? 0);
+        assert.strictEqual(resDecoded.thirdDimPrecision, expectedDecoded.thirdDimPrecision ?? 0);
         expectedDecoded.polyline.forEach((expectedPos, i0) => {
             expectedPos.forEach((val, i1) => {
                 const precision = i1 === 2 ? resDecoded.thirdDimPrecision : resDecoded.precision;
