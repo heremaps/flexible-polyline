@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Flexible Polyline encoding: a lossy compressed representation of a list of coordinate pairs or triples",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "node test/test.js"
   },
