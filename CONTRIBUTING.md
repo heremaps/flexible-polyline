@@ -1,10 +1,12 @@
-# Introduction
+# Contributing to the Flexible Polyline Project
+
+## Introduction
 
 The team behind the [Flexible Polyline](https://github.com/heremaps/flexible-polyline) gratefully accepts contributions via
 [pull requests](https://help.github.com/articles/about-pull-requests/) filed against the
 [GitHub project](https://github.com/heremaps/flexible-polyline/pulls).
 
-# Signing each Commit
+## Signing each Commit
 
 As part of filing a pull request we ask you to sign off the
 [Developer Certificate of Origin](https://developercertificate.org/) (DCO) in each commit.
@@ -17,12 +19,14 @@ to indicate that you agree with the DCO.
 
 An example signed commit message:
 
-```
-    README.md: Fix minor spelling mistake
+```txt
+README.md: Fix minor spelling mistake
 
-    Signed-off-by: John Doe <john.doe@example.com>
+Signed-off-by: John Doe <john.doe@example.com>
 ```
 
 Git has the `-s` flag that can sign a commit for you, see example below:
 
-`$ git commit -s -m 'README.md: Fix minor spelling mistake'`
+```sh
+git commit -s -m 'README.md: Fix minor spelling mistake'
+```
