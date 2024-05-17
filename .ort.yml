@@ -13,9 +13,9 @@ excludes:
     reason : "TEST_TOOL_OF"
     comment: "Directory containing code only used for testing. Not included in released artifacts in the context of this project."
   scopes:
-  - name   : "dev-dependencies"
-    reason : "BUILD_TOOL_OF"
+  - pattern   : "dev-dependencies"
+    reason : "DEV_DEPENDENCY_OF"
     comment: "Scope with dependencies only used for development. Not included in released artifacts in the context of this project."
-  - name   : "devDependencies"
-    reason : "BUILD_TOOL_OF"
+  - pattern   : "devDependencies"
+    reason : "DEV_DEPENDENCY_OF"
     comment: "Scope with dependencies only used for development. Not included in released artifacts in the context of this project."
