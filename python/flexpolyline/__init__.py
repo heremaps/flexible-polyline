@@ -29,13 +29,15 @@ def decode(encoded):
 def iter_dict_decode(encoded):
     """Return an iterator over coordinates dicts. The dict contains always the keys 'lat', 'lng' and
     depending on the polyline can contain a third key ('elv', 'lvl', 'alt', ...)."""
-    third_dim_key = THIRD_DIM_MAP[get_third_dimension(encoded)]
+    third_dim_key = THIRD_DIM_MAP.get(get_third_dimension(encoded))
     for row in iter_decode(encoded):
-        yield {
+        coordinate = {
             'lat': row[0],
             'lng': row[1],
-            third_dim_key: row[2]
         }
+        if third_dim_key is not None:
+            coordinate[third_dim_key] = row[2]
+        yield coordinate
 
 
 def dict_decode(encoded):
