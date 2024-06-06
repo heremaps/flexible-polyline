@@ -96,6 +96,9 @@ Possible values are:
   * 6 – custom1
   * 7 – custom2
 
+Note that the concrete unit used for the 3rd dimension is not specified, and depends on how the format is used.
+It is recommended to make sure it is properly documented (e.g. elevation could be represented in WGS84 or EGM96).
+
 
 #### 3rd dim precision
 
