@@ -112,16 +112,11 @@ class FlexiblePolylineTest {
     }
 
     private fun testDecodeConvertValue() {
-        val encoded = ("h_wqiB").toCharArray()
+        val encoded = ("h_wqiB").iterator()
         val expected = -179.98321
-        val computed = AtomicReference(0.0)
         val conv = Converter(5)
-        conv.decodeValue(
-            encoded,
-            AtomicInteger(0),
-            computed
-        )
-        assertEquals(computed.get(), expected)
+        val computed = conv.decodeValue(encoded)
+        assertEquals(computed, expected)
     }
 
     private fun testSimpleLatLngDecoding() {

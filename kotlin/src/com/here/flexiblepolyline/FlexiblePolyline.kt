@@ -6,9 +6,11 @@
  */
 package com.here.flexiblepolyline
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.abs
+import kotlin.math.roundToLong
+import kotlin.math.sign
+import kotlin.math.pow
+
 /**
  * The polyline encoding is a lossy compressed representation of a list of coordinate pairs or coordinate triples.
  * It achieves that by:
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 object FlexiblePolyline {
 
-    private const val version: Int = 1
+    const val VERSION = 1L
     //Base64 URL-safe characters
     private val ENCODING_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray()
     private val DECODING_TABLE = intArrayOf(
@@ -63,7 +65,7 @@ object FlexiblePolyline {
      * @param encoded URL-safe encoded [String]
      * @return [List] of coordinate triples that are decoded from input
      *
-     * @see PolylineDecoder.getThirdDimension
+     * @see getThirdDimension
      * @see LatLngZ
      */
     @JvmStatic
@@ -71,14 +73,8 @@ object FlexiblePolyline {
         require(!(encoded == null || encoded.trim { it <= ' ' }.isEmpty())) { "Invalid argument!" }
         val result: MutableList<LatLngZ> = ArrayList()
         val dec = Decoder(encoded)
-        var lat = AtomicReference(0.0)
-        var lng = AtomicReference(0.0)
-        var z = AtomicReference(0.0)
-        while (dec.decodeOne(lat, lng, z)) {
-            result.add(LatLngZ(lat.get(), lng.get(), z.get()))
-            lat = AtomicReference(0.0)
-            lng = AtomicReference(0.0)
-            z = AtomicReference(0.0)
+        while (dec.hasNext()) {
+            result.add(dec.decodeOne())
         }
         return result
     }
@@ -90,10 +86,7 @@ object FlexiblePolyline {
      */
     @JvmStatic
     fun getThirdDimension(encoded: String): ThirdDimension? {
-        val index = AtomicInteger(0)
-        val header = AtomicLong(0)
-        Decoder.decodeHeaderFromString(encoded.toCharArray(), index, header)
-        return ThirdDimension.fromNum(header.get() shr 4 and 7)
+        return Decoder(encoded).thirdDimension
     }
 
     //Decode a single char to the corresponding value
@@ -112,6 +105,12 @@ object FlexiblePolyline {
         private val latConveter: Converter = Converter(precision)
         private val lngConveter: Converter = Converter(precision)
         private val zConveter: Converter = Converter(thirdDimPrecision)
+
+
+        init {
+            encodeHeader(precision, this.thirdDimension.num, thirdDimPrecision)
+        }
+
         private fun encodeHeader(precision: Int, thirdDimensionValue: Int, thirdDimPrecision: Int) {
             /*
              * Encode the `precision`, `third_dim` and `third_dim_precision` into one encoded char
@@ -120,8 +119,8 @@ object FlexiblePolyline {
             require(!(thirdDimPrecision < 0 || thirdDimPrecision > 15)) { "thirdDimPrecision out of range" }
             require(!(thirdDimensionValue < 0 || thirdDimensionValue > 7)) { "thirdDimensionValue out of range" }
             val res = (thirdDimPrecision shl 7 or (thirdDimensionValue shl 4) or precision).toLong()
-            Converter.encodeUnsignedVarint(version.toLong(), result)
-            Converter.encodeUnsignedVarint(res, result)
+            Converter.encodeUnsignedVarInt(VERSION, result)
+            Converter.encodeUnsignedVarInt(res, result)
         }
 
         private fun add(lat: Double, lng: Double) {
@@ -144,71 +143,52 @@ object FlexiblePolyline {
         fun getEncoded(): String {
             return result.toString()
         }
-
-        init {
-            encodeHeader(precision, this.thirdDimension.num, thirdDimPrecision)
-        }
     }
 
     /*
      * Single instance for decoding an input request.
      */
     private class Decoder(encoded: String) {
-        private val encoded: CharArray = encoded.toCharArray()
-        private val index: AtomicInteger = AtomicInteger(0)
+        private val encoded: CharIterator = (encoded).iterator()
         private val latConverter: Converter
         private val lngConverter: Converter
         private val zConverter: Converter
-        private var precision = 0
-        private var thirdDimPrecision = 0
-        private var thirdDimension: ThirdDimension? = null
+        var thirdDimension: ThirdDimension? = null
+
+        init {
+            val header = decodeHeader()
+            val precision = header and 0x0f
+            thirdDimension = ThirdDimension.fromNum(((header shr 4) and 0x07).toLong())
+            val thirdDimPrecision = ((header shr 7) and 0x0f)
+            latConverter = Converter(precision)
+            lngConverter = Converter(precision)
+            zConverter = Converter(thirdDimPrecision)
+        }
+
         private fun hasThirdDimension(): Boolean {
             return thirdDimension != ThirdDimension.ABSENT
         }
 
-        private fun decodeHeader() {
-            val header = AtomicLong(0)
-            decodeHeaderFromString(encoded, index, header)
-            precision = (header.get() and 15).toInt() // we pick the first 4 bits only
-            header.set(header.get() shr 4)
-            thirdDimension = ThirdDimension.fromNum(header.get() and 7) // we pick the first 3 bits only
-            thirdDimPrecision = (header.get() shr 3 and 15).toInt()
+        private fun decodeHeader(): Int {
+            val version = Converter.decodeUnsignedVarInt(encoded)
+            require(version == VERSION) { "Invalid format version :: encoded.$version vs FlexiblePolyline.$VERSION" }
+            // Decode the polyline header
+            return Converter.decodeUnsignedVarInt(encoded).toInt()
         }
 
-        fun decodeOne(
-            lat: AtomicReference<Double>,
-            lng: AtomicReference<Double>,
-            z: AtomicReference<Double>
-        ): Boolean {
-            if (index.get() == encoded.size) {
-                return false
-            }
-            require(latConverter.decodeValue(encoded, index, lat)) { "Invalid encoding" }
-            require(lngConverter.decodeValue(encoded, index, lng)) { "Invalid encoding" }
+        fun decodeOne(): LatLngZ {
+            val lat = latConverter.decodeValue(encoded)
+            val lng = lngConverter.decodeValue(encoded)
+
             if (hasThirdDimension()) {
-                require(zConverter.decodeValue(encoded, index, z)) { "Invalid encoding" }
+                val z = zConverter.decodeValue(encoded)
+                return LatLngZ(lat, lng, z)
             }
-            return true
+            return LatLngZ(lat, lng)
         }
 
-        companion object {
-            fun decodeHeaderFromString(encoded: CharArray, index: AtomicInteger, header: AtomicLong) {
-                val value = AtomicLong(0)
-
-                // Decode the header version
-                require(Converter.decodeUnsignedVarint(encoded, index, value)) { "Invalid encoding" }
-                require(value.get() == version.toLong()) { "Invalid format version" }
-                // Decode the polyline header
-                require(Converter.decodeUnsignedVarint(encoded, index, value)) { "Invalid encoding" }
-                header.set(value.get())
-            }
-        }
-
-        init {
-            decodeHeader()
-            latConverter = Converter(precision)
-            lngConverter = Converter(precision)
-            zConverter = Converter(thirdDimPrecision)
+        fun hasNext(): Boolean {
+            return encoded.hasNext()
         }
     }
 
@@ -219,12 +199,8 @@ object FlexiblePolyline {
      * Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)
      */
     class Converter(precision: Int) {
-        private var multiplier: Long = 0
+        private val multiplier = (10.0.pow(precision.toDouble())).toLong()
         private var lastValue: Long = 0
-        private fun setPrecision(precision: Int) {
-            //multiplier = Math.pow(10.0, java.lang.Double.valueOf(precision.toDouble())).toLong()
-            multiplier = Math.pow(10.0, precision.toDouble()).toLong()
-        }
 
         fun encodeValue(value: Double, result: StringBuilder) {
             /*
@@ -233,7 +209,7 @@ object FlexiblePolyline {
 		     * round(-1.5) --> -2
 		     * round(-2.5) --> -3
 		     */
-            val scaledValue = Math.round(Math.abs(value * multiplier)) * Math.round(Math.signum(value))
+            val scaledValue = abs(value * multiplier).roundToLong() * sign(value).roundToLong()
             var delta = scaledValue - lastValue
             val negative = delta < 0
             lastValue = scaledValue
@@ -245,34 +221,23 @@ object FlexiblePolyline {
             if (negative) {
                 delta = delta.inv()
             }
-            encodeUnsignedVarint(delta, result)
+            encodeUnsignedVarInt(delta, result)
         }
 
         //Decode single coordinate (say lat|lng|z) starting at index
-        fun decodeValue(
-            encoded: CharArray,
-            index: AtomicInteger,
-            coordinate: AtomicReference<Double>
-        ): Boolean {
-            val delta = AtomicLong()
-            if (!decodeUnsignedVarint(encoded, index, delta)) {
-                return false
+        fun decodeValue(encoded: CharIterator): Double {
+            var l = decodeUnsignedVarInt(encoded)
+            if ((l and 1L) != 0L) {
+                l = l.inv()
             }
-            if (delta.get() and 1 != 0L) {
-                delta.set(delta.get().inv())
-            }
-            delta.set(delta.get() shr 1)
-            lastValue += delta.get()
-            coordinate.set(lastValue.toDouble() / multiplier)
-            return true
+            l = l shr 1
+            lastValue += l
+
+            return lastValue.toDouble() / multiplier
         }
 
         companion object {
-            fun encodeUnsignedVarint(value: Long, result: StringBuilder) {
-                // TODO: check performance impact
-                /*val estimatedCapacity = 10000 // Adjust as needed
-                result.ensureCapacity(estimatedCapacity)*/
-                // end TODO
+            fun encodeUnsignedVarInt(value: Long, result: StringBuilder) {
                 var number = value
                 while (number > 0x1F) {
                     val pos = (number and 0x1F or 0x20).toByte()
@@ -282,39 +247,24 @@ object FlexiblePolyline {
                 result.append(ENCODING_TABLE[number.toByte().toInt()])
             }
 
-            fun decodeUnsignedVarint(
-                encoded: CharArray,
-                index: AtomicInteger,
-                result: AtomicLong
-            ): Boolean {
+            fun decodeUnsignedVarInt(encoded: CharIterator): Long {
                 var shift: Short = 0
-                var delta: Long = 0
-                var value: Long
-                while (index.get() < encoded.size) {
-                    value = decodeChar(encoded[index.get()]).toLong()
+                var result: Long = 0
+                while ( encoded.hasNext() ) {
+                    val c = encoded.next()
+                    val value = decodeChar(c).toLong()
                     if (value < 0) {
-                        return false
+                        throw IllegalArgumentException("Unexpected value found :: '$c")
                     }
-                    index.incrementAndGet()
-                    delta = delta or (value and 0x1F shl shift.toInt())
-                    if (value and 0x20 == 0L) {
-                        result.set(delta)
-                        return true
+                    result = result or ((value and 0x1FL) shl shift.toInt())
+                    if ((value and 0x20L) == 0L) {
+                        return result
                     } else {
                         shift = (shift + 5).toShort()
                     }
-                    // TODO: Check performance and tests
-                    /*if (shift <= 0) {
-                        return true
-                    }*/
-                    // end TODO
                 }
-                return shift <= 0
+                return result
             }
-        }
-
-        init {
-            setPrecision(precision)
         }
     }
 
@@ -328,7 +278,7 @@ object FlexiblePolyline {
 
         companion object {
             fun fromNum(value: Long): ThirdDimension? {
-                for (dim in values()) {
+                for (dim in entries) {
                     if (dim.num.toLong() == value) {
                         return dim
                     }
@@ -351,8 +301,7 @@ object FlexiblePolyline {
                 return true
             }
             if (other is LatLngZ) {
-                val passed = other
-                if (passed.lat == lat && passed.lng == lng && passed.z == z) {
+                if (other.lat == lat && other.lng == lng && other.z == z) {
                     return true
                 }
             }
