@@ -91,7 +91,17 @@ class TestFlexPolyline(unittest.TestCase):
         with self.assertRaises(ValueError):
             list(fp.iter_decode("CFoz5xJ67i1B1B7PzIhaxL7"))
 
-    def test_dict_decode(self):
+    def test_dict_decode_2d(self):
+        polyline = fp.dict_decode("BFoz5xJ67i1B1B7PzIhaxL7Y")
+        expected = [
+            {'lat': 50.10228, 'lng': 8.69821},
+            {'lat': 50.10201, 'lng': 8.69567},
+            {'lat': 50.10063, 'lng': 8.69150},
+            {'lat': 50.09878, 'lng': 8.68752}
+        ]
+        self.assertAlmostEqualDictSequence(polyline, expected, places=7)
+
+    def test_dict_decode_3d(self):
         polyline = fp.dict_decode("BlBoz5xJ67i1BU1B7PUzIhaUxL7YU")
         expected = [
             {'lat': 50.10228, 'lng': 8.69821, 'alt': 10},
