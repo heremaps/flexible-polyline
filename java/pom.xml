@@ -4,7 +4,7 @@
     <name>Flexible Polyline</name>
     <groupId>com.here</groupId>
     <artifactId>flexpolyline</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>pom</packaging>
     <description>Flexible Polyline encoding: a lossy compressed representation of a list of coordinate pairs or triples</description>
     <url>https://github.com/heremaps/flexible-polyline</url>
