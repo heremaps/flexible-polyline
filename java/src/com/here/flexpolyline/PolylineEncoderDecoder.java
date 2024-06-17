@@ -41,13 +41,15 @@ public class PolylineEncoderDecoder {
     public static final char[] ENCODING_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
 
     public static final  int[] DECODING_TABLE = {
-                                            62, -1, -1, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1,
-                                            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-                                            22, 23, 24, 25, -1, -1, -1, -1, 63, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-                                            36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
-                                          };
+            62, -1, -1, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+            22, 23, 24, 25, -1, -1, -1, -1, 63, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+            36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+    };
+
     /**
-     * Encode the list of coordinate triples.<BR><BR>
+     * Encode the list of coordinate triples.
+     *
      * The third dimension value will be eligible for encoding only when ThirdDimension is other than ABSENT.
      * This is lossy compression based on precision accuracy.
      *
@@ -58,7 +60,7 @@ public class PolylineEncoderDecoder {
      * @return URL-safe encoded {@link String} for the given coordinates.
      */
     public static String encode(List<LatLngZ> coordinates, int precision, ThirdDimension thirdDimension, int thirdDimPrecision) {
-        if (coordinates == null || coordinates.size() == 0) {
+        if (coordinates == null || coordinates.isEmpty()) {
             throw new IllegalArgumentException("Invalid coordinates!");
         }
         if (thirdDimension == null) {
@@ -73,15 +75,16 @@ public class PolylineEncoderDecoder {
     }
 
     /**
-     * Decode the encoded input {@link String} to {@link List} of coordinate triples.<BR><BR>
+     * Decode the encoded input {@link String} to {@link List} of coordinate triples.
+     *
      * @param encoded URL-safe encoded {@link String}
      * @return {@link List} of coordinate triples that are decoded from input
-     * 
+     *
      * @see PolylineDecoder#getThirdDimension(String) getThirdDimension
      * @see LatLngZ
      */
-    public static final List<LatLngZ> decode(String encoded) {
-        
+    public static List<LatLngZ> decode(String encoded) {
+
         if (encoded == null || encoded.trim().isEmpty()) {
             throw new IllegalArgumentException("Invalid argument!");
         }
@@ -103,26 +106,26 @@ public class PolylineEncoderDecoder {
     public static ThirdDimension getThirdDimension(String encoded) {
         return new Decoder(encoded).getThirdDimension();
     }
-    
+
     public byte getVersion() {
         return FORMAT_VERSION;
     }
-    
+
     /*
-     * Single instance for configuration, validation and encoding for an input request. 
+     * Single instance for configuration, validation and encoding for an input request.
      */
     private static class Encoder {
 
         private final StringBuilder result;
-        private final Converter latConveter;
-        private final Converter lngConveter;
-        private final Converter zConveter;
+        private final Converter latConverter;
+        private final Converter lngConverter;
+        private final Converter zConverter;
         private final ThirdDimension thirdDimension;
 
         public Encoder(int precision, ThirdDimension thirdDimension, int thirdDimPrecision) {
-            this.latConveter = new Converter(precision);
-            this.lngConveter = new Converter(precision);
-            this.zConveter = new Converter(thirdDimPrecision);
+            this.latConverter = new Converter(precision);
+            this.lngConverter = new Converter(precision);
+            this.zConverter = new Converter(thirdDimPrecision);
             this.thirdDimension = thirdDimension;
             this.result = new StringBuilder();
             encodeHeader(precision, this.thirdDimension.getNum(), thirdDimPrecision);
@@ -149,14 +152,14 @@ public class PolylineEncoderDecoder {
         }
 
         private void add(double lat, double lng) {
-            latConveter.encodeValue(lat, result);
-            lngConveter.encodeValue(lng, result);
+            latConverter.encodeValue(lat, result);
+            lngConverter.encodeValue(lng, result);
         }
 
         private void add(double lat, double lng, double z) {
             add(lat, lng);
             if (this.thirdDimension != ThirdDimension.ABSENT) {
-                zConveter.encodeValue(z, result);
+                zConverter.encodeValue(z, result);
             }
         }
 
@@ -171,9 +174,9 @@ public class PolylineEncoderDecoder {
             return this.result.toString();
         }
     }
-    
+
     /*
-     * Single instance for decoding an input request. 
+     * Single instance for decoding an input request.
      */
     private static class Decoder {
 
@@ -230,7 +233,7 @@ public class PolylineEncoderDecoder {
             return new LatLngZ(lat, lng);
         }
     }
-    
+
     //Decode a single char to the corresponding value
     private static int decodeChar(char charValue) {
         int pos = charValue - 45;
@@ -244,48 +247,48 @@ public class PolylineEncoderDecoder {
      * Stateful instance for encoding and decoding on a sequence of Coordinates part of an request.
      * Instance should be specific to type of coordinates (e.g. Lat, Lng)
      * so that specific type delta is computed for encoding.
-     * Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)   
+     * Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)
      */
-	public static class Converter {
+    public static class Converter {
 
-		private final long multiplier;
-		private long lastValue = 0;
+        private final long multiplier;
+        private long lastValue = 0;
 
-		public Converter(int precision) {
+        public Converter(int precision) {
             multiplier = (long) Math.pow(10, precision);
-		}
+        }
 
-		private static void encodeUnsignedVarint(long value, StringBuilder result) {
-			while (value > 0x1F) {
-				byte pos =  (byte) ((value & 0x1F) | 0x20);
-				result.append(ENCODING_TABLE[pos]);
-				value >>= 5;
-			}
-			result.append(ENCODING_TABLE[(byte) value]);
-		}
+        private static void encodeUnsignedVarint(long value, StringBuilder result) {
+            while (value > 0x1F) {
+                byte pos =  (byte) ((value & 0x1F) | 0x20);
+                result.append(ENCODING_TABLE[pos]);
+                value >>= 5;
+            }
+            result.append(ENCODING_TABLE[(byte) value]);
+        }
 
-		void encodeValue(double value, StringBuilder result) {
-		    /*
-		     * Round-half-up
-		     * round(-1.4) --> -1
-		     * round(-1.5) --> -2
-		     * round(-2.5) --> -3
-		     */
+        void encodeValue(double value, StringBuilder result) {
+            /*
+             * Round-half-up
+             * round(-1.4) --> -1
+             * round(-1.5) --> -2
+             * round(-2.5) --> -3
+             */
             long scaledValue = Math.round(Math.abs(value * multiplier)) * Math.round(Math.signum(value));
-			long delta = scaledValue - lastValue;
-			boolean negative = delta < 0;
+            long delta = scaledValue - lastValue;
+            boolean negative = delta < 0;
 
-			lastValue = scaledValue;
+            lastValue = scaledValue;
 
-			// make room on lowest bit
-			delta <<= 1;
+            // make room on lowest bit
+            delta <<= 1;
 
-			// invert bits if the value is negative
-			if (negative) {
-				delta = ~delta;
-			}
-			encodeUnsignedVarint(delta, result);
-		}
+            // invert bits if the value is negative
+            if (negative) {
+                delta = ~delta;
+            }
+            encodeUnsignedVarint(delta, result);
+        }
 
         private static long decodeUnsignedVarint(CharacterIterator encoded) {
             short shift = 0;
@@ -306,7 +309,7 @@ public class PolylineEncoderDecoder {
                 }
 
             }
-            throw new IllegalArgumentException("Unpexpected end of encoded string");
+            throw new IllegalArgumentException("Unexpected end of encoded string");
         }
 
         //Decode single coordinate (say lat|lng) starting at index
@@ -320,13 +323,13 @@ public class PolylineEncoderDecoder {
 
             return (double) lastValue / multiplier;
         }
-	}
-	
-	/**
-	 * 	3rd dimension specification. 
-	 *  Example a level, altitude, elevation or some other custom value.
-	 *  ABSENT is default when there is no third dimension en/decoding required.
-	 */
+    }
+
+    /**
+     * 	3rd dimension specification.
+     *  Example a level, altitude, elevation or some other custom value.
+     *  ABSENT is default when there is no third dimension en/decoding required.
+     */
     public enum ThirdDimension {
         ABSENT(0),
         LEVEL(1),
@@ -379,7 +382,7 @@ public class PolylineEncoderDecoder {
         public String toString() {
             return "LatLngZ [lat=" + lat + ", lng=" + lng + ", z=" + z + "]";
         }
-        
+
         @Override
         public boolean equals(Object anObject) {
             if (this == anObject) {
