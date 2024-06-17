@@ -15,7 +15,9 @@ import static com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension.ELEVAT
 import static com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension.LEVEL;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
@@ -30,25 +32,25 @@ import com.here.flexpolyline.PolylineEncoderDecoder.ThirdDimension;
  * Validate polyline encoding with different input combinations.
  */
 public class PolylineEncoderDecoderTest {
-    
+
     private void testInvalidCoordinates() {
-        
+
         //Null coordinates
         assertThrows(IllegalArgumentException.class,
                      () -> { encode(null, 5, ThirdDimension.ABSENT, 0); });
 
-        
+
         //Empty coordinates list test
         assertThrows(IllegalArgumentException.class,
                      () -> { encode(new ArrayList<LatLngZ>(), 5, ThirdDimension.ABSENT, 0); });
     }
 
     private void testInvalidThirdDimension() {
-        
+
         List<LatLngZ> pairs = new ArrayList<>();
         pairs.add(new LatLngZ(50.1022829, 8.6982122));
         ThirdDimension invalid = null;
-        
+
         //Invalid Third Dimension
         assertThrows(IllegalArgumentException.class,
                      () -> { encode(pairs, 5, invalid, 0); });
@@ -106,23 +108,23 @@ public class PolylineEncoderDecoderTest {
         String computed = encode(tuples, 5, ThirdDimension.ALTITUDE, 0);
         assertEquals(computed, expected);
     }
-    
-    
+
+
     /**********************************************/
     /********** Decoder test starts ***************/
     /**********************************************/
     private void testInvalidEncoderInput() {
-        
+
         //Null coordinates
         assertThrows(IllegalArgumentException.class,
                      () -> { decode(null); });
 
-        
+
         //Empty coordinates list test
         assertThrows(IllegalArgumentException.class,
                      () -> { decode(""); });
     }
-    
+
     private void testThirdDimension() {
         assertTrue(getThirdDimension("BFoz5xJ67i1BU") == ABSENT);
         assertTrue(getThirdDimension("BVoz5xJ67i1BU") == LEVEL);
@@ -138,8 +140,8 @@ public class PolylineEncoderDecoderTest {
         final double computed = conv.decodeValue(new StringCharacterIterator(encoded));
         assertEquals(computed, expected);
     }
-    
-    
+
+
     private void testSimpleLatLngDecoding() {
 
         List<LatLngZ> computed = decode("BFoz5xJ67i1B1B7PzIhaxL7Y");
@@ -185,49 +187,35 @@ public class PolylineEncoderDecoderTest {
         tuples.add(new LatLngZ(50.10201, 8.69567, 20));
         tuples.add(new LatLngZ(50.10063, 8.69150, 30));
         tuples.add(new LatLngZ(50.09878, 8.68752, 40));
-        
+
         assertEquals(computed.size(), tuples.size());
         for (int i = 0; i < computed.size(); ++i) {
             assertEquals(computed.get(i), tuples.get(i));
         }
     }
 
-    private static final String TEST_FILES_RELATIVE_PATH = "../test/";
+    private static final Path TEST_FILES_RELATIVE_PATH = Paths.get("..", "test");
 
-    private void encodingSmokeTest() {
+    private void encodingSmokeTest() throws IOException {
+
+        final List<ParsedDecodedLine> decodedLines = parseDecodedFile(TEST_FILES_RELATIVE_PATH.resolve("original.txt"));
 
         int lineNo = 0;
-        try (BufferedReader input = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "original.txt"));
-             BufferedReader encoded = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/encoded.txt"))) {
+        try (BufferedReader encoded = Files.newBufferedReader(TEST_FILES_RELATIVE_PATH.resolve(Paths.get("round_half_up", "encoded.txt")))) {
 
-            String inputFileLine;
             String encodedFileLine;
 
             // read line by line and validate the test
-            while ((inputFileLine = input.readLine()) != null && (encodedFileLine = encoded.readLine()) != null) {
+            while (lineNo < decodedLines.size() && (encodedFileLine = encoded.readLine()) != null) {
 
-                lineNo++;
-                int precision = 0;
-                int thirdDimPrecision = 0;
-                boolean hasThirdDimension = false;
-                ThirdDimension thirdDimension = ThirdDimension.ABSENT;
-                inputFileLine = inputFileLine.trim();
                 encodedFileLine = encodedFileLine.trim();
 
-                //File parsing
-                String[] inputs = inputFileLine.substring(1, inputFileLine.length() - 1).split(";");
-                String[] meta = inputs[0].trim().substring(1, inputs[0].trim().length() - 1).split(",");
-                precision = Integer.valueOf(meta[0]);
-
-                if (meta.length > 1) {
-                    thirdDimPrecision = Integer.valueOf(meta[1].trim());
-                    thirdDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()));
-                    hasThirdDimension = true;
-                }
-                List<LatLngZ> latLngZs = extractLatLngZ(inputs[1], hasThirdDimension);
-                String encodedComputed = encode(latLngZs, precision, thirdDimension, thirdDimPrecision);
+                final ParsedDecodedLine decodedLine = decodedLines.get(lineNo);
+                String encodedComputed = encode(decodedLine.latLngZs, decodedLine.precision, decodedLine.thirdDimension, decodedLine.thirdDimePrecision);
                 String encodedExpected = encodedFileLine;
+
                 assertEquals(encodedComputed, encodedExpected);
+                lineNo++;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -235,44 +223,33 @@ public class PolylineEncoderDecoderTest {
         }
     }
 
-    private void decodingSmokeTest() {
+    private void decodingSmokeTest() throws IOException {
+
+        final List<ParsedDecodedLine> expectedResults = parseDecodedFile(TEST_FILES_RELATIVE_PATH.resolve(Paths.get("round_half_up", "decoded.txt")));
 
         int lineNo = 0;
-        try (BufferedReader encoded = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/encoded.txt"));
-             BufferedReader decoded = Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/decoded.txt"))) {
+        try (BufferedReader encoded = Files.newBufferedReader(TEST_FILES_RELATIVE_PATH.resolve(Paths.get("round_half_up", "encoded.txt")))) {
 
             String encodedFileLine;
-            String decodedFileLine;
 
             // read line by line and validate the test
-            while ((encodedFileLine = encoded.readLine()) != null && (decodedFileLine = decoded.readLine()) != null) {
+            while ((encodedFileLine = encoded.readLine()) != null && expectedResults.size() > lineNo) {
 
-                lineNo++;
-                boolean hasThirdDimension = false;
-                ThirdDimension expectedDimension = ThirdDimension.ABSENT;
                 encodedFileLine = encodedFileLine.trim();
-                decodedFileLine = decodedFileLine.trim();
-
-                //File parsing
-                String[] output = decodedFileLine.substring(1, decodedFileLine.length() - 1).split(";");
-                String[] meta = output[0].trim().substring(1, output[0].trim().length() - 1).split(",");
-                if (meta.length > 1) {
-                    expectedDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()));
-                    hasThirdDimension = true;
-                }
-                String decodedInputLine = decodedFileLine.substring(1, decodedFileLine.length() - 1).split(";")[1];
-                List<LatLngZ> expectedLatLngZs = extractLatLngZ(decodedInputLine, hasThirdDimension);
 
                 //Validate thirdDimension
                 ThirdDimension computedDimension = getThirdDimension(encodedFileLine);
-                assertEquals(computedDimension, expectedDimension);
+                final ParsedDecodedLine expectedResult = expectedResults.get(lineNo);
+                assertEquals(computedDimension, expectedResult.thirdDimension);
 
                 //Validate LatLngZ
                 List<LatLngZ> computedLatLngZs = decode(encodedFileLine);
-                assertEquals(computedLatLngZs.size(), expectedLatLngZs.size());
+                assertEquals(computedLatLngZs.size(), expectedResult.latLngZs.size());
                 for (int i = 0; i < computedLatLngZs.size(); ++i) {
-                    assertEquals(computedLatLngZs.get(i), expectedLatLngZs.get(i));
+                    assertEquals(computedLatLngZs.get(i), expectedResult.latLngZs.get(i));
                 }
+
+                lineNo++;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -290,21 +267,77 @@ public class PolylineEncoderDecoderTest {
         }
         String encoded = encode(coordinates, PRECISION, ThirdDimension.ALTITUDE, PRECISION);
         long startTime = System.nanoTime();
-        List<LatLngZ> decoded = decode(encoded);
+        decode(encoded);
         long duration = (System.nanoTime() - startTime);
         System.out.println("duration: " + duration/1000 + "us");
     }
 
-    private static List<LatLngZ> extractLatLngZ(String line, boolean hasThirdDimension) {
-        List<LatLngZ> latLngZs = new ArrayList<LatLngZ>();
+    private static List<ParsedDecodedLine> parseDecodedFile(Path filePath) throws IOException {
 
-        String[] coordinates  = line.trim().substring(1, line.trim().length()-1).split(",");
-        for(int itr = 0; itr < coordinates.length && !isNullOrEmpty(coordinates[itr]); ) {
-            double lat = Double.valueOf(coordinates[itr++].trim().replace("(", ""));
-            double lng = Double.valueOf(coordinates[itr++].trim().replace(")", ""));
-            double z   = 0;
-            if(hasThirdDimension) {
-                 z   = Double.valueOf(coordinates[itr++].trim().replace(")", ""));
+        String decodedFileLine;
+        ArrayList<ParsedDecodedLine> expectedResults = new ArrayList<>();
+
+        try (BufferedReader decoded = Files.newBufferedReader(filePath)) {
+
+            int lineNumber = 1;
+
+            while ((decodedFileLine = decoded.readLine()) != null) {
+                try {
+                    //File parsing
+                    // Format: {(precision, thirdDimPrecision?, thirdDim?); [(c1Lat, c1Lng, c1Alt), ]}
+                    decodedFileLine = decodedFileLine.replaceAll("\\s|\\(|\\)", "");
+
+                    // .substring gets rid of { and }
+                    final String[] splitBySemicolon = decodedFileLine.substring(1, decodedFileLine.length() - 1).split(";");
+                    final String leftPart = splitBySemicolon[0];
+                    String[] meta = leftPart.split(",");
+
+                    ThirdDimension thirdDimension = ABSENT;
+
+                    if (meta.length > 2) {
+                        thirdDimension = ThirdDimension.fromNum(Integer.parseInt(meta[2]));
+                    }
+                    List<LatLngZ> expectedLatLngZs = extractLatLngZ(splitBySemicolon[1], thirdDimension != ABSENT);
+                    final int precision = Integer.parseInt(meta[0]);
+                    final int thirdDimPrecision = meta.length > 1 ? Integer.parseInt(meta[1]) : 0;
+
+                    expectedResults.add(new ParsedDecodedLine(expectedLatLngZs, precision, thirdDimPrecision, thirdDimension));
+                    lineNumber++;
+                } catch (Exception e) {
+                    System.err.format("File " + filePath + " line " + lineNumber + " failed to parse: %s", e);
+                }
+            }
+        }
+        return expectedResults;
+    }
+
+    private static class ParsedDecodedLine {
+
+        public final int precision;
+        public final int thirdDimePrecision;
+        public final ThirdDimension thirdDimension;
+        public final List<LatLngZ> latLngZs;
+
+        public ParsedDecodedLine(List<LatLngZ> expectedLatLngZs, int precision, int thirdDimePrecision, ThirdDimension expectedDimension) {
+
+            this.precision = precision;
+            this.thirdDimePrecision = thirdDimePrecision;
+            this.thirdDimension = expectedDimension;
+            this.latLngZs = expectedLatLngZs;
+        }
+    }
+
+    private static List<LatLngZ> extractLatLngZ(String s, boolean hasThirdDimension) {
+
+        List<LatLngZ> latLngZs = new ArrayList<>();
+        // s.substring gets rid of [ and ]
+        String[] coordinates = s.substring(1, s.length() - 1).split(",");
+        for (int itr = 0; itr < coordinates.length && !isNullOrEmpty(coordinates[itr]); ) {
+            double lat = Double.parseDouble(coordinates[itr++]);
+            double lng = Double.parseDouble(coordinates[itr++]);
+            double z = 0;
+            if (hasThirdDimension) {
+                z = Double.parseDouble(coordinates[itr++]);
             }
             latLngZs.add(new LatLngZ(lat, lng, z));
         }
@@ -312,10 +345,7 @@ public class PolylineEncoderDecoderTest {
     }
 
     public static boolean isNullOrEmpty(String str) {
-        if(str != null && !str.trim().isEmpty()) {
-            return false;
-        }
-        return true;
+        return str == null || str.isEmpty();
     }
 
     private static void assertEquals(Object lhs, Object rhs) {
@@ -325,13 +355,13 @@ public class PolylineEncoderDecoderTest {
             }
         }
     }
-    
+
     private static void assertTrue(boolean value) {
         if (!value) {
             throw new RuntimeException("Assert failed");
         }
     }
-    
+
     private static <T extends Throwable> void assertThrows(Class<T> expectedType, Runnable runnable) {
         try {
             runnable.run();
@@ -345,7 +375,7 @@ public class PolylineEncoderDecoderTest {
         throw new RuntimeException("Assert failed, No exception found!");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         final int DEFAULT_LINE_LENGTH = 1000;
         int lineLength = DEFAULT_LINE_LENGTH;
         if (args.length > 0) {
