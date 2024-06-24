@@ -42,18 +42,18 @@ function decode(encoded) {
 
     let i = 2;
     for (;i < decoder.length;) {
-        const deltaLat = toSigned(decoder[i]) / factorDegree;
-        const deltaLng = toSigned(decoder[i + 1]) / factorDegree;
+        const deltaLat = toSigned(decoder[i]);
+        const deltaLng = toSigned(decoder[i + 1]);
         lastLat += deltaLat;
         lastLng += deltaLng;
 
         if (thirdDim) {
-            const deltaZ = toSigned(decoder[i + 2]) / factorZ;
+            const deltaZ = toSigned(decoder[i + 2]);
             lastZ += deltaZ;
-            res.push([lastLat, lastLng, lastZ]);
+            res.push([lastLat / factorDegree, lastLng / factorDegree, lastZ / factorZ]);
             i += 3;
         } else {
-            res.push([lastLat, lastLng]);
+            res.push([lastLat / factorDegree, lastLng / factorDegree]);
             i += 2;
         }
     }
