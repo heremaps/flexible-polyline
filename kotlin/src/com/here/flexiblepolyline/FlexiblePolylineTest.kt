@@ -11,8 +11,6 @@ import com.here.flexiblepolyline.FlexiblePolyline.LatLngZ
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Validate polyline encoding with different input combinations.
@@ -166,98 +164,31 @@ class FlexiblePolylineTest {
     }
 
     private fun encodingSmokeTest() {
-        var lineNo = 0
-        try {
-            Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "original.txt")).use { input ->
-                Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/encoded.txt")).use { encoded ->
-                    var encodedFileLine : String? = "";
-                    var inputFileLine : String? = "";
+        TestCaseReader("original.txt", "round_half_up/encoded.txt").iterator().forEach {
+            val original = parseTestDataFromLine(it.testInput);
+            val encodedComputed: String = FlexiblePolyline.encode(original.latLngZs, original.precision, original.thirdDimension, original.thirdDimensionPrecision)
 
-                    // read line by line and validate the test
-                    while (encodedFileLine != null && inputFileLine != null) {
-                        encodedFileLine = encoded.readLine()
-                        inputFileLine = input.readLine()
-
-                        if(encodedFileLine != null && inputFileLine != null){
-                            lineNo++
-                            var precision = 0
-                            var thirdDimPrecision = 0
-                            var hasThirdDimension = false
-                            var thirdDimension: ThirdDimension? = ThirdDimension.ABSENT
-                            inputFileLine = inputFileLine.trim()
-                            encodedFileLine = encodedFileLine.trim()
-
-                            //File parsing
-                            val inputs = inputFileLine.substring(1, inputFileLine.length - 1).split(";").toTypedArray()
-                            val meta = inputs[0].trim().substring(1, inputs[0].trim().length - 1).split(",").toTypedArray()
-                            precision = Integer.valueOf(meta[0])
-                            if (meta.size > 1) {
-                                thirdDimPrecision = Integer.valueOf(meta[1].trim())
-                                thirdDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
-                                hasThirdDimension = true
-                            }
-                            val latLngZs = extractLatLngZ(inputs[1], hasThirdDimension)
-                            val encodedComputed: String = FlexiblePolyline.encode(latLngZs, precision, thirdDimension, thirdDimPrecision)
-                            val encodedExpected = encodedFileLine
-                            assertEquals(encodedComputed, encodedExpected)
-                        } else { break; }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            System.err.format("LineNo: $lineNo validation got exception: %s%n", e)
+            assertEquals(encodedComputed, it.testResult)
         }
     }
 
     private fun decodingSmokeTest() {
-        var lineNo = 0
-        try {
-            Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/encoded.txt")).use { encoded ->
-                Files.newBufferedReader(Paths.get(TEST_FILES_RELATIVE_PATH + "round_half_up/decoded.txt")).use { decoded ->
-                    var encodedFileLine : String? = "";
-                    var decodedFileLine : String? = "";
+        TestCaseReader("round_half_up/encoded.txt", "round_half_up/decoded.txt").iterator().forEach {
+            val expected = parseTestDataFromLine(it.testResult);
 
-                    // read line by line and validate the test
-                    while (encodedFileLine != null && decodedFileLine != null) {
-                            encodedFileLine = encoded.readLine()
-                            decodedFileLine = decoded.readLine()
+            //Validate thirdDimension
+            val computedDimension: FlexiblePolyline.ThirdDimension = FlexiblePolyline.getThirdDimension(it.testInput)!!
+            assertEquals(computedDimension, expected.thirdDimension)
 
-                            if(encodedFileLine != null && decodedFileLine != null){
+            //Validate LatLngZ
+            val computedLatLngZs: List<FlexiblePolyline.LatLngZ> = FlexiblePolyline.decode(it.testInput)
 
-                                lineNo++
-                                var hasThirdDimension = false
-                                var expectedDimension: ThirdDimension? = ThirdDimension.ABSENT
-                                encodedFileLine = encodedFileLine.trim()
-                                decodedFileLine = decodedFileLine.trim()
-
-                                //File parsing
-                                val output = decodedFileLine.substring(1, decodedFileLine.length - 1).split(";").toTypedArray()
-                                val meta = output[0].trim().substring(1, output[0].trim().length - 1).split(",").toTypedArray()
-                                if (meta.size > 1) {
-                                    expectedDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
-                                    hasThirdDimension = true
-                                }
-                                val decodedInputLine = decodedFileLine.substring(1, decodedFileLine.length - 1).split(";").toTypedArray()[1]
-                                val expectedLatLngZs = extractLatLngZ(decodedInputLine, hasThirdDimension)
-
-                                //Validate thirdDimension
-                                val computedDimension: ThirdDimension = FlexiblePolyline.getThirdDimension(encodedFileLine)!!
-                                assertEquals(computedDimension, expectedDimension)
-
-                                //Validate LatLngZ
-                                val computedLatLngZs: List<LatLngZ> = FlexiblePolyline.decode(encodedFileLine)
-                                assertEquals(computedLatLngZs.size, expectedLatLngZs.size)
-                                for (i in computedLatLngZs.indices) {
-                                    assertEquals(computedLatLngZs[i], expectedLatLngZs[i])
-                                }
-                            } else { break; }
-                        }
+            assertEquals(computedLatLngZs.size, expected.latLngZs?.size)
+            expected.latLngZs?.let {
+                for (i in computedLatLngZs.indices) {
+                    assertEquals(computedLatLngZs[i], expected.latLngZs[i])
                 }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            System.err.format("LineNo: $lineNo validation got exception: %s%n", e)
+            } ?: throw Exception("Error parsing expected results")
         }
     }
 
@@ -278,20 +209,49 @@ class FlexiblePolylineTest {
     }
 
     companion object {
-        private const val TEST_FILES_RELATIVE_PATH = "../test/"
+        const val TEST_FILES_RELATIVE_PATH = "../test/"
+
+        // Helper for parsing DecodeLines file
+        // Line Format: {(precision, thirdDimPrecision?, thirdDim?); [(c1Lat, c1Lng, c1Alt), ]}
+        private fun parseTestDataFromLine(line: String): TestData {
+            var precision = 0
+            var thirdDimensionPrecision = 0
+            var hasThirdDimension = false
+            var thirdDimension: FlexiblePolyline.ThirdDimension? = FlexiblePolyline.ThirdDimension.ABSENT
+
+            // .substring gets rid of { and }
+            val splitBySemicolon = line.substring(1, line.length - 1).split(";").toTypedArray();
+            val leftPart = splitBySemicolon[0];
+            val meta = leftPart.split(",").toTypedArray();
+            precision = Integer.valueOf(meta[0])
+            if (meta.size > 1) {
+                thirdDimension = FlexiblePolyline.ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
+                hasThirdDimension = true
+                thirdDimensionPrecision = Integer.valueOf(meta[1].trim { it <= ' ' })
+            }
+
+            val latLngZs = extractLatLngZ(splitBySemicolon[1], hasThirdDimension)
+
+            return TestData(
+                precision = precision,
+                thirdDimensionPrecision = thirdDimensionPrecision,
+                thirdDimension = thirdDimension,
+                latLngZs = latLngZs
+            )
+        }
 
         private fun extractLatLngZ(line: String, hasThirdDimension: Boolean): List<LatLngZ> {
             val latLngZs: MutableList<LatLngZ> = ArrayList()
             val coordinates = line.trim().substring(1, line.trim().length - 1).split(",").toTypedArray()
             var itr = 0
-            while (itr < coordinates.size && !isNullOrEmpty(coordinates[itr])) {
-                val lat = java.lang.Double.valueOf(coordinates[itr++].trim().replace("(", ""))
-                val lng = java.lang.Double.valueOf(coordinates[itr++].trim().replace(")", ""))
+            while (itr < coordinates.size && coordinates[itr].isNotBlank()) {
+                val lat = coordinates[itr++].trim().replace("(", "").toDouble()
+                val lng = coordinates[itr++].trim().replace(")", "").toDouble()
                 var z = 0.0
                 if (hasThirdDimension) {
-                    z = java.lang.Double.valueOf(coordinates[itr++].trim().replace(")", ""))
+                    z = coordinates[itr++].trim().replace(")", "").toDouble()
                 }
-                latLngZs.add(LatLngZ(lat, lng, z))
+                latLngZs.add(FlexiblePolyline.LatLngZ(lat, lng, z))
             }
             return latLngZs
         }
@@ -356,5 +316,65 @@ class FlexiblePolylineTest {
             test.decodingSmokeTest()
             test.testVeryLongLine(lineLength)
         }
+    }
+}
+
+private data class TestData(
+    val precision: Int = 0,
+    val thirdDimensionPrecision: Int = 0,
+    val thirdDimension: FlexiblePolyline.ThirdDimension? = null,
+    val latLngZs: List<FlexiblePolyline.LatLngZ>? = null
+){}
+
+private data class TestCase(
+    val testInput: String,
+    val testResult: String
+){}
+
+private class TestCaseReader(testInputFile: String, testResultFile: String) : Iterator<TestCase> {
+    private var totalLines = 0
+    private var currentLine = 0
+    private var testCases = mutableListOf<TestCase>()
+
+    init {
+        try {
+            Files.newBufferedReader(Paths.get(FlexiblePolylineTest.TEST_FILES_RELATIVE_PATH + testInputFile)).use { input ->
+                Files.newBufferedReader(Paths.get(FlexiblePolylineTest.TEST_FILES_RELATIVE_PATH + testResultFile)).use { result ->
+                    // read line by line and validate the test
+                    while (true) {
+                        val regex = "\\s|\\(|\\)".toRegex()
+                        val testInputFileLine = input.readLine();
+                        val testResultFileLine = result.readLine();
+
+                        if (testInputFileLine != null && testInputFileLine.isNotBlank() && testResultFileLine != null && testResultFileLine.isNotBlank()) {
+                            testCases.add(
+                                TestCase(
+                                    testInput = testInputFileLine.replace(regex, ""),
+                                    testResult = testResultFileLine.replace(regex, "")
+                                )
+                            )
+                            totalLines++
+                        } else {
+                            break
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            System.err.format("TestCaseReader - exception reading test case $testInputFile and $testResultFile at LineNo: $totalLines: %s%n", e)
+            throw RuntimeException("Test failed, as test data could not be loaded by TestCaseReader")
+        }
+    }
+
+    override fun hasNext(): Boolean {
+        return currentLine < totalLines
+    }
+
+    override fun next(): TestCase {
+        if(!hasNext()) throw NoSuchElementException()
+        val testCase = testCases[currentLine]
+        currentLine++
+        return testCase
     }
 }
