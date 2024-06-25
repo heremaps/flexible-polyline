@@ -106,6 +106,7 @@ class FlexiblePolylineTest {
     }
 
     private fun testThirdDimension() {
+        assertTrue(FlexiblePolyline.getThirdDimension("BFoz5xJ67i1BU") === ThirdDimension.ABSENT)
         assertTrue(FlexiblePolyline.getThirdDimension("BVoz5xJ67i1BU") === ThirdDimension.LEVEL)
         assertTrue(FlexiblePolyline.getThirdDimension("BlBoz5xJ67i1BU") === ThirdDimension.ALTITUDE)
         assertTrue(FlexiblePolyline.getThirdDimension("B1Boz5xJ67i1BU") === ThirdDimension.ELEVATION)
@@ -183,16 +184,16 @@ class FlexiblePolylineTest {
                             var thirdDimPrecision = 0
                             var hasThirdDimension = false
                             var thirdDimension: ThirdDimension? = ThirdDimension.ABSENT
-                            inputFileLine = inputFileLine.trim { it <= ' ' }
-                            encodedFileLine = encodedFileLine.trim { it <= ' ' }
+                            inputFileLine = inputFileLine.trim()
+                            encodedFileLine = encodedFileLine.trim()
 
                             //File parsing
                             val inputs = inputFileLine.substring(1, inputFileLine.length - 1).split(";").toTypedArray()
-                            val meta = inputs[0].trim { it <= ' ' }.substring(1, inputs[0].trim { it <= ' ' }.length - 1).split(",").toTypedArray()
+                            val meta = inputs[0].trim().substring(1, inputs[0].trim().length - 1).split(",").toTypedArray()
                             precision = Integer.valueOf(meta[0])
                             if (meta.size > 1) {
-                                thirdDimPrecision = Integer.valueOf(meta[1].trim { it <= ' ' })
-                                thirdDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim { it <= ' ' }).toLong())
+                                thirdDimPrecision = Integer.valueOf(meta[1].trim())
+                                thirdDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
                                 hasThirdDimension = true
                             }
                             val latLngZs = extractLatLngZ(inputs[1], hasThirdDimension)
@@ -227,14 +228,14 @@ class FlexiblePolylineTest {
                                 lineNo++
                                 var hasThirdDimension = false
                                 var expectedDimension: ThirdDimension? = ThirdDimension.ABSENT
-                                encodedFileLine = encodedFileLine.trim { it <= ' ' }
-                                decodedFileLine = decodedFileLine.trim { it <= ' ' }
+                                encodedFileLine = encodedFileLine.trim()
+                                decodedFileLine = decodedFileLine.trim()
 
                                 //File parsing
                                 val output = decodedFileLine.substring(1, decodedFileLine.length - 1).split(";").toTypedArray()
-                                val meta = output[0].trim { it <= ' ' }.substring(1, output[0].trim { it <= ' ' }.length - 1).split(",").toTypedArray()
+                                val meta = output[0].trim().substring(1, output[0].trim().length - 1).split(",").toTypedArray()
                                 if (meta.size > 1) {
-                                    expectedDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim { it <= ' ' }).toLong())
+                                    expectedDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
                                     hasThirdDimension = true
                                 }
                                 val decodedInputLine = decodedFileLine.substring(1, decodedFileLine.length - 1).split(";").toTypedArray()[1]
@@ -281,14 +282,14 @@ class FlexiblePolylineTest {
 
         private fun extractLatLngZ(line: String, hasThirdDimension: Boolean): List<LatLngZ> {
             val latLngZs: MutableList<LatLngZ> = ArrayList()
-            val coordinates = line.trim { it <= ' ' }.substring(1, line.trim { it <= ' ' }.length - 1).split(",").toTypedArray()
+            val coordinates = line.trim().substring(1, line.trim().length - 1).split(",").toTypedArray()
             var itr = 0
             while (itr < coordinates.size && !isNullOrEmpty(coordinates[itr])) {
-                val lat = java.lang.Double.valueOf(coordinates[itr++].trim { it <= ' ' }.replace("(", ""))
-                val lng = java.lang.Double.valueOf(coordinates[itr++].trim { it <= ' ' }.replace(")", ""))
+                val lat = java.lang.Double.valueOf(coordinates[itr++].trim().replace("(", ""))
+                val lng = java.lang.Double.valueOf(coordinates[itr++].trim().replace(")", ""))
                 var z = 0.0
                 if (hasThirdDimension) {
-                    z = java.lang.Double.valueOf(coordinates[itr++].trim { it <= ' ' }.replace(")", ""))
+                    z = java.lang.Double.valueOf(coordinates[itr++].trim().replace(")", ""))
                 }
                 latLngZs.add(LatLngZ(lat, lng, z))
             }
@@ -296,7 +297,7 @@ class FlexiblePolylineTest {
         }
 
         private fun isNullOrEmpty(str: String?): Boolean {
-            return !(str != null && !str.trim { it <= ' ' }.isEmpty())
+            return str == null || str.trim().isEmpty()
         }
 
         private fun assertEquals(lhs: Any, rhs: Any?) {

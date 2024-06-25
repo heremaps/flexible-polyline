@@ -26,8 +26,8 @@ import kotlin.math.pow
  *  -  It allows to encode a 3rd dimension with a given precision, which may be a level, altitude, elevation or some other custom value
  */
 object FlexiblePolyline {
-
     const val VERSION = 1L
+
     //Base64 URL-safe characters
     private val ENCODING_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray()
     private val DECODING_TABLE = intArrayOf(
@@ -38,7 +38,8 @@ object FlexiblePolyline {
     )
 
     /**
-     * Encode the list of coordinate triples.<BR></BR><BR></BR>
+     * Encode the list of coordinate triples.
+     *
      * The third dimension value will be eligible for encoding only when ThirdDimension is other than ABSENT.
      * This is lossy compression based on precision accuracy.
      *
@@ -53,15 +54,15 @@ object FlexiblePolyline {
         require(!coordinates.isNullOrEmpty()) { "Invalid coordinates!" }
         requireNotNull(thirdDimension) { "Invalid thirdDimension" }
         val enc = Encoder(precision, thirdDimension, thirdDimPrecision)
-        val iterator = coordinates.iterator()
-        while (iterator.hasNext()) {
-            enc.add(iterator.next())
+        coordinates.iterator().forEach {
+            enc.add(it)
         }
         return enc.getEncoded()
     }
 
     /**
-     * Decode the encoded input [String] to [List] of coordinate triples.<BR></BR><BR></BR>
+     * Decode the encoded input [String] to [List] of coordinate triples.
+     *
      * @param encoded URL-safe encoded [String]
      * @return [List] of coordinate triples that are decoded from input
      *
@@ -70,11 +71,11 @@ object FlexiblePolyline {
      */
     @JvmStatic
     fun decode(encoded: String?): List<LatLngZ> {
-        require(!(encoded == null || encoded.trim { it <= ' ' }.isEmpty())) { "Invalid argument!" }
+        require(!encoded.isNullOrBlank()) { "Invalid argument!" }
         val result: MutableList<LatLngZ> = ArrayList()
         val dec = Decoder(encoded)
-        while (dec.hasNext()) {
-            result.add(dec.decodeOne())
+        dec.iterator().forEach {
+            result.add(it)
         }
         return result
     }
@@ -102,10 +103,9 @@ object FlexiblePolyline {
      */
     private class Encoder(precision: Int, private val thirdDimension: ThirdDimension, thirdDimPrecision: Int) {
         private val result: StringBuilder = StringBuilder()
-        private val latConveter: Converter = Converter(precision)
-        private val lngConveter: Converter = Converter(precision)
-        private val zConveter: Converter = Converter(thirdDimPrecision)
-
+        private val latConverter: Converter = Converter(precision)
+        private val lngConverter: Converter = Converter(precision)
+        private val zConverter: Converter = Converter(thirdDimPrecision)
 
         init {
             encodeHeader(precision, this.thirdDimension.num, thirdDimPrecision)
@@ -124,14 +124,14 @@ object FlexiblePolyline {
         }
 
         private fun add(lat: Double, lng: Double) {
-            latConveter.encodeValue(lat, result)
-            lngConveter.encodeValue(lng, result)
+            latConverter.encodeValue(lat, result)
+            lngConverter.encodeValue(lng, result)
         }
 
         private fun add(lat: Double, lng: Double, z: Double) {
             add(lat, lng)
             if (thirdDimension != ThirdDimension.ABSENT) {
-                zConveter.encodeValue(z, result)
+                zConverter.encodeValue(z, result)
             }
         }
 
@@ -148,8 +148,8 @@ object FlexiblePolyline {
     /*
      * Single instance for decoding an input request.
      */
-    private class Decoder(encoded: String) {
-        private val encoded: CharIterator = (encoded).iterator()
+    private class Decoder(encoded: String) : Iterator<LatLngZ> {
+        private val encoded: CharIterator = encoded.iterator()
         private val latConverter: Converter
         private val lngConverter: Converter
         private val zConverter: Converter
@@ -176,7 +176,7 @@ object FlexiblePolyline {
             return Converter.decodeUnsignedVarInt(encoded).toInt()
         }
 
-        fun decodeOne(): LatLngZ {
+        override fun next(): LatLngZ {
             val lat = latConverter.decodeValue(encoded)
             val lng = lngConverter.decodeValue(encoded)
 
@@ -187,7 +187,7 @@ object FlexiblePolyline {
             return LatLngZ(lat, lng)
         }
 
-        fun hasNext(): Boolean {
+        override fun hasNext(): Boolean {
             return encoded.hasNext()
         }
     }
@@ -250,11 +250,11 @@ object FlexiblePolyline {
             fun decodeUnsignedVarInt(encoded: CharIterator): Long {
                 var shift: Short = 0
                 var result: Long = 0
-                while ( encoded.hasNext() ) {
-                    val c = encoded.next()
-                    val value = decodeChar(c).toLong()
+
+                encoded.forEach {
+                    val value = decodeChar(it).toLong()
                     if (value < 0) {
-                        throw IllegalArgumentException("Unexpected value found :: '$c")
+                        throw IllegalArgumentException("Unexpected value found :: '$it")
                     }
                     result = result or ((value and 0x1FL) shl shift.toInt())
                     if ((value and 0x20L) == 0L) {
@@ -291,28 +291,12 @@ object FlexiblePolyline {
     /**
      * Coordinate triple
      */
-    class LatLngZ @JvmOverloads constructor(val lat: Double, val lng: Double, val z: Double = 0.0) {
-        override fun toString(): String {
-            return "LatLngZ [lat=$lat, lng=$lng, z=$z]"
-        }
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) {
-                return true
-            }
-            if (other is LatLngZ) {
-                if (other.lat == lat && other.lng == lng && other.z == z) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        override fun hashCode(): Int {
-            var result = lat.hashCode()
-            result = 31 * result + lng.hashCode()
-            result = 31 * result + z.hashCode()
-            return result
-        }
-    }
+    /**
+     * Coordinate triple
+     */
+    data class LatLngZ(
+        val lat: Double,
+        val lng: Double,
+        val z: Double = 0.0
+    ){}
 }
