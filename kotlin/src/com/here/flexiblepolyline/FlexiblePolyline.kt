@@ -28,7 +28,7 @@ import kotlin.math.pow
 object FlexiblePolyline {
     const val VERSION = 1L
 
-    //Base64 URL-safe characters
+    // Base64 URL-safe characters
     private val ENCODING_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray()
     private val DECODING_TABLE = intArrayOf(
         62, -1, -1, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1,
@@ -82,6 +82,7 @@ object FlexiblePolyline {
 
     /**
      * ThirdDimension type from the encoded input [String]
+     *
      * @param encoded URL-safe encoded coordinate triples [String]
      * @return type of [ThirdDimension]
      */
@@ -90,7 +91,7 @@ object FlexiblePolyline {
         return Decoder(encoded).thirdDimension
     }
 
-    //Decode a single char to the corresponding value
+    // Decode a single char to the corresponding value
     private fun decodeChar(charValue: Char): Int {
         val pos = charValue.code - 45
         return if (pos < 0 || pos > 77) {
@@ -98,9 +99,7 @@ object FlexiblePolyline {
         } else DECODING_TABLE[pos]
     }
 
-    /*
-     * Single instance for configuration, validation and encoding for an input request.
-     */
+    // Single instance for configuration, validation and encoding for an input request.
     private class Encoder(precision: Int, private val thirdDimension: ThirdDimension, thirdDimPrecision: Int) {
         private val result: StringBuilder = StringBuilder()
         private val latConverter: Converter = Converter(precision)
@@ -112,13 +111,11 @@ object FlexiblePolyline {
         }
 
         private fun encodeHeader(precision: Int, thirdDimensionValue: Int, thirdDimPrecision: Int) {
-            /*
-             * Encode the `precision`, `third_dim` and `third_dim_precision` into one encoded char
-             */
+            // Encode the `precision`, `third_dim` and `third_dim_precision` into one encoded char
             require(!(precision < 0 || precision > 15)) { "precision out of range" }
             require(!(thirdDimPrecision < 0 || thirdDimPrecision > 15)) { "thirdDimPrecision out of range" }
             require(!(thirdDimensionValue < 0 || thirdDimensionValue > 7)) { "thirdDimensionValue out of range" }
-            val res = (thirdDimPrecision shl 7 or (thirdDimensionValue shl 4) or precision).toLong()
+            val res = ((thirdDimPrecision shl 7) or (thirdDimensionValue shl 4) or precision).toLong()
             Converter.encodeUnsignedVarInt(VERSION, result)
             Converter.encodeUnsignedVarInt(res, result)
         }
@@ -145,9 +142,7 @@ object FlexiblePolyline {
         }
     }
 
-    /*
-     * Single instance for decoding an input request.
-     */
+    // Single instance for decoding an input request.
     private class Decoder(encoded: String) : Iterator<LatLngZ> {
         private val encoded: CharIterator = encoded.iterator()
         private val latConverter: Converter
@@ -192,11 +187,13 @@ object FlexiblePolyline {
         }
     }
 
-    /*
+    /**
      * Stateful instance for encoding and decoding on a sequence of Coordinates part of an request.
      * Instance should be specific to type of coordinates (e.g. Lat, Lng)
      * so that specific type delta is computed for encoding.
      * Lat0 Lng0 3rd0 (Lat1-Lat0) (Lng1-Lng0) (3rdDim1-3rdDim0)
+     *
+     * @param precision [Int]
      */
     class Converter(precision: Int) {
         private val multiplier = (10.0.pow(precision.toDouble())).toLong()
@@ -224,7 +221,7 @@ object FlexiblePolyline {
             encodeUnsignedVarInt(delta, result)
         }
 
-        //Decode single coordinate (say lat|lng|z) starting at index
+        // Decode single coordinate (say lat|lng|z) starting at index
         fun decodeValue(encoded: CharIterator): Double {
             var l = decodeUnsignedVarInt(encoded)
             if ((l and 1L) != 0L) {
@@ -251,10 +248,10 @@ object FlexiblePolyline {
                 var shift: Short = 0
                 var result: Long = 0
 
-                encoded.forEach {
-                    val value = decodeChar(it).toLong()
+                encoded.withIndex().forEach {
+                    val value = decodeChar(it.value).toLong()
                     if (value < 0) {
-                        throw IllegalArgumentException("Unexpected value found :: '$it")
+                        throw IllegalArgumentException("Unexpected value found :: '${it.value}' at ${it.index}")
                     }
                     result = result or ((value and 0x1FL) shl shift.toInt())
                     if ((value and 0x20L) == 0L) {
@@ -288,9 +285,6 @@ object FlexiblePolyline {
         }
     }
 
-    /**
-     * Coordinate triple
-     */
     /**
      * Coordinate triple
      */

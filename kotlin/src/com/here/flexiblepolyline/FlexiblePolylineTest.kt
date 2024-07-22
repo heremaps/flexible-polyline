@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  * License-Filename: LICENSE
  */
-import com.here.flexiblepolyline.*
+import com.here.flexiblepolyline.FlexiblePolyline
 import com.here.flexiblepolyline.FlexiblePolyline.Converter
 import com.here.flexiblepolyline.FlexiblePolyline.ThirdDimension
 import com.here.flexiblepolyline.FlexiblePolyline.LatLngZ
@@ -18,13 +18,13 @@ import java.util.*
 class FlexiblePolylineTest {
     private fun testInvalidCoordinates() {
 
-        //Null coordinates
+        // Null coordinates
         assertThrows(
             IllegalArgumentException::class.java
         ) { FlexiblePolyline.encode(null, 5, ThirdDimension.ABSENT, 0) }
 
 
-        //Empty coordinates list test
+        // Empty coordinates list test
         assertThrows(
             IllegalArgumentException::class.java
         ) { FlexiblePolyline.encode(ArrayList<LatLngZ>(), 5, ThirdDimension.ABSENT, 0) }
@@ -35,14 +35,14 @@ class FlexiblePolylineTest {
         pairs.add(LatLngZ(50.1022829, 8.6982122))
         val invalid: ThirdDimension? = null
 
-        //Invalid Third Dimension
+        // Invalid Third Dimension
         assertThrows(
             IllegalArgumentException::class.java
         ) { FlexiblePolyline.encode(pairs, 5, invalid, 0) }
     }
 
     private fun testConvertValue() {
-        val conv: FlexiblePolyline.Converter = Converter(5)
+        val conv: Converter = Converter(5)
         val result = StringBuilder()
         conv.encodeValue(-179.98321, result)
         assertEquals(result.toString(), "h_wqiB")
@@ -86,18 +86,19 @@ class FlexiblePolylineTest {
         val computed: String = FlexiblePolyline.encode(tuples, 5, ThirdDimension.ALTITUDE, 0)
         assertEquals(computed, expected)
     }
-    /** */
-    /********** Decoder test starts  */
-    /** */
+
+    /**
+     * Decoder test starts
+     */
     private fun testInvalidEncoderInput() {
 
-        //Null coordinates
+        // Null coordinates
         assertThrows(
             IllegalArgumentException::class.java
         ) { FlexiblePolyline.decode(null) }
 
 
-        //Empty coordinates list test
+        // Empty coordinates list test
         assertThrows(
             IllegalArgumentException::class.java
         ) { FlexiblePolyline.decode("") }
@@ -164,7 +165,7 @@ class FlexiblePolylineTest {
     }
 
     private fun encodingSmokeTest() {
-        TestCaseReader("original.txt", "round_half_up/encoded.txt").iterator().forEach {
+        TestCaseReader("original.txt", "round_half_up/encoded.txt").testCases.forEach {
             val original = parseTestDataFromLine(it.testInput);
             val encodedComputed: String = FlexiblePolyline.encode(original.latLngZs, original.precision, original.thirdDimension, original.thirdDimensionPrecision)
 
@@ -173,14 +174,14 @@ class FlexiblePolylineTest {
     }
 
     private fun decodingSmokeTest() {
-        TestCaseReader("round_half_up/encoded.txt", "round_half_up/decoded.txt").iterator().forEach {
+        TestCaseReader("round_half_up/encoded.txt", "round_half_up/decoded.txt").testCases.forEach {
             val expected = parseTestDataFromLine(it.testResult);
 
-            //Validate thirdDimension
-            val computedDimension: FlexiblePolyline.ThirdDimension = FlexiblePolyline.getThirdDimension(it.testInput)!!
+            // Validate thirdDimension
+            val computedDimension: ThirdDimension = FlexiblePolyline.getThirdDimension(it.testInput)!!
             assertEquals(computedDimension, expected.thirdDimension)
 
-            //Validate LatLngZ
+            // Validate LatLngZ
             val computedLatLngZs: List<FlexiblePolyline.LatLngZ> = FlexiblePolyline.decode(it.testInput)
 
             assertEquals(computedLatLngZs.size, expected.latLngZs?.size)
@@ -211,13 +212,15 @@ class FlexiblePolylineTest {
     companion object {
         const val TEST_FILES_RELATIVE_PATH = "../test/"
 
-        // Helper for parsing DecodeLines file
-        // Line Format: {(precision, thirdDimPrecision?, thirdDim?); [(c1Lat, c1Lng, c1Alt), ]}
+        /*
+         * Helper for parsing DecodeLines file
+         * Line Format: {(precision, thirdDimPrecision?, thirdDim?); [(c1Lat, c1Lng, c1Alt), ]}
+         */
         private fun parseTestDataFromLine(line: String): TestData {
             var precision = 0
             var thirdDimensionPrecision = 0
             var hasThirdDimension = false
-            var thirdDimension: FlexiblePolyline.ThirdDimension? = FlexiblePolyline.ThirdDimension.ABSENT
+            var thirdDimension: ThirdDimension? = FlexiblePolyline.ThirdDimension.ABSENT
 
             // .substring gets rid of { and }
             val splitBySemicolon = line.substring(1, line.length - 1).split(";").toTypedArray();
@@ -225,9 +228,9 @@ class FlexiblePolylineTest {
             val meta = leftPart.split(",").toTypedArray();
             precision = Integer.valueOf(meta[0])
             if (meta.size > 1) {
-                thirdDimension = FlexiblePolyline.ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
+                thirdDimension = ThirdDimension.fromNum(Integer.valueOf(meta[2].trim()).toLong())
                 hasThirdDimension = true
-                thirdDimensionPrecision = Integer.valueOf(meta[1].trim { it <= ' ' })
+                thirdDimensionPrecision = Integer.valueOf(meta[1].trim())
             }
 
             val latLngZs = extractLatLngZ(splitBySemicolon[1], hasThirdDimension)
@@ -254,10 +257,6 @@ class FlexiblePolylineTest {
                 latLngZs.add(FlexiblePolyline.LatLngZ(lat, lng, z))
             }
             return latLngZs
-        }
-
-        private fun isNullOrEmpty(str: String?): Boolean {
-            return str == null || str.trim().isEmpty()
         }
 
         private fun assertEquals(lhs: Any, rhs: Any?) {
@@ -306,7 +305,7 @@ class FlexiblePolylineTest {
             test.testLatLngZEncode()
             test.encodingSmokeTest()
 
-            //Decode test
+            // Decode test
             test.testInvalidEncoderInput()
             test.testThirdDimension()
             test.testDecodeConvertValue()
@@ -322,7 +321,7 @@ class FlexiblePolylineTest {
 private data class TestData(
     val precision: Int = 0,
     val thirdDimensionPrecision: Int = 0,
-    val thirdDimension: FlexiblePolyline.ThirdDimension? = null,
+    val thirdDimension: ThirdDimension? = null,
     val latLngZs: List<FlexiblePolyline.LatLngZ>? = null
 ){}
 
@@ -331,12 +330,12 @@ private data class TestCase(
     val testResult: String
 ){}
 
-private class TestCaseReader(testInputFile: String, testResultFile: String) : Iterator<TestCase> {
-    private var totalLines = 0
-    private var currentLine = 0
-    private var testCases = mutableListOf<TestCase>()
+private class TestCaseReader(testInputFile: String, testResultFile: String) {
+    val testCases: List<TestCase>
 
     init {
+        var totalLines = 0
+        val testCaseList = mutableListOf<TestCase>()
         try {
             Files.newBufferedReader(Paths.get(FlexiblePolylineTest.TEST_FILES_RELATIVE_PATH + testInputFile)).use { input ->
                 Files.newBufferedReader(Paths.get(FlexiblePolylineTest.TEST_FILES_RELATIVE_PATH + testResultFile)).use { result ->
@@ -347,7 +346,7 @@ private class TestCaseReader(testInputFile: String, testResultFile: String) : It
                         val testResultFileLine = result.readLine();
 
                         if (testInputFileLine != null && testInputFileLine.isNotBlank() && testResultFileLine != null && testResultFileLine.isNotBlank()) {
-                            testCases.add(
+                            testCaseList.add(
                                 TestCase(
                                     testInput = testInputFileLine.replace(regex, ""),
                                     testResult = testResultFileLine.replace(regex, "")
@@ -355,6 +354,9 @@ private class TestCaseReader(testInputFile: String, testResultFile: String) : It
                             )
                             totalLines++
                         } else {
+                            if(totalLines==0) {
+                                System.err.format("TestCaseReader - 0 test cases in file $testInputFile or $testResultFile:")
+                            }
                             break
                         }
                     }
@@ -363,18 +365,8 @@ private class TestCaseReader(testInputFile: String, testResultFile: String) : It
         } catch (e: Exception) {
             e.printStackTrace()
             System.err.format("TestCaseReader - exception reading test case $testInputFile and $testResultFile at LineNo: $totalLines: %s%n", e)
-            throw RuntimeException("Test failed, as test data could not be loaded by TestCaseReader")
+            throw RuntimeException("TestCaseReader - exception reading test case $testInputFile and $testResultFile at LineNo: $totalLines", e)
         }
-    }
-
-    override fun hasNext(): Boolean {
-        return currentLine < totalLines
-    }
-
-    override fun next(): TestCase {
-        if(!hasNext()) throw NoSuchElementException()
-        val testCase = testCases[currentLine]
-        currentLine++
-        return testCase
+        testCases = testCaseList.toList()
     }
 }
