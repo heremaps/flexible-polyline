@@ -4,6 +4,7 @@
   "description": "Flexible Polyline encoding: a lossy compressed representation of a list of coordinate pairs or triples",
   "main": "index.js",
   "types": "index.d.ts",
+  "bin": "./cli.js",
   "scripts": {
     "prepack": "cp ../LICENSE .",
     "test": "node test/test.js",
