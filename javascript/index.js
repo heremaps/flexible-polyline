@@ -77,11 +77,12 @@ function decodeUnsignedValues(encoded) {
     let result = Num(0);
     let shift = Num(0);
     const resList = [];
+    const mask = Num(0x20);
 
     encoded.split('').forEach((char) => {
         const value = Num(decodeChar(char));
-        result |= (value & Num(0x1F)) << shift;
-        if ((value & Num(0x20)) === Num(0)) {
+        result += (value % Num(32)) * (Num(1) << shift);
+        if ((value % (mask * Num(2))) < mask) {
             resList.push(result);
             result = Num(0);
             shift = Num(0);
@@ -111,11 +112,11 @@ function decodeHeader(version, encodedHeader) {
 function toSigned(val) {
     // Decode the sign from an unsigned value
     let res = val;
-    if (res & Num(1)) {
-        res = ~res;
+    if (res % Num(2)) {
+        res = (res + Num(1)) * Num(-1);
     }
-    res >>= Num(1);
-    return +res.toString();
+    res = res / Num(2);
+    return Math.floor(+res.toString());
 }
 
 function encode({ precision = DEFAULT_PRECISION, thirdDim = ABSENT, thirdDimPrecision = 0, polyline }) {
