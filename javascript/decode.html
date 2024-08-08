@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexpolyline Decoder/Encoder</title>
+    <script>const module = {}; // should move to ES6 modules</script>
+    <script src="index.js"></script>
+</head>
+<body>
+    <h1>Flexpolyline Decoder/Encoder</h1>
+    <textarea id="input" rows="10" cols="50" placeholder="Paste an encoded flexible polyline or an array of coordinates (JSON format)" oninput="validateInput()"></textarea>
+    <button id="decodeButton" onclick="processInput()">Decode</button>
+    <pre id="output"></pre>
+    <script>
+        const inputElement = document.getElementById('input');
+        const outputElement = document.getElementById('output');
+        const decodeButton = document.getElementById('decodeButton');
+
+        if (window.location.hash) {
+            inputElement.value = decodeURIComponent(window.location.hash.slice(1));
+            processInput();
+        }
+
+        function validateInput() {
+            const input = inputElement.value.trim();
+            const isEncoding = input.startsWith('[') || input.startsWith('{');
+            decodeButton.textContent = isEncoding ? 'Encode' : 'Decode';
+        }
+
+        function processInput() {
+            const data = inputElement.value.trim();
+            const isEncoding = data.startsWith('[') || data.startsWith('{');
+            if (isEncoding) {
+                encodeInput(data);
+            } else {
+                decodeInput(data);
+            }
+        }
+
+        function decodeInput(data) {
+            try {
+                const decodedData = decode(data);
+                outputElement.textContent = JSON.stringify(decodedData, null, 2);
+            } catch (error) {
+                outputElement.textContent = error.message;
+            }
+        }
+
+        function encodeInput(data) {
+            try {
+                let params = JSON.parse(data);
+                if (Array.isArray(params)) {
+                    params = { polyline: params };
+                }
+                const encodedData = encode(params);
+                outputElement.textContent = encodedData;
+            } catch (error) {
+                outputElement.textContent = error.message;
+            }
+        }
+    </script>
+</body>
+</html>
