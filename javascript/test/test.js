@@ -42,7 +42,9 @@ function runTests() {
     });
 }
 
+console.time('test');
 runTests();
+console.timeEnd('test');
 
 function parseLine(line) {
     // Strip off all spaces, curly braces, square brackets and trailing comma

@@ -25,7 +25,7 @@ const ELEVATION = 3;
 const CUSTOM1 = 6;
 const CUSTOM2 = 7;
 
-const Num = typeof BigInt !== "undefined" ? BigInt : Number;
+const Num = (typeof BigInt === "undefined" || (typeof process === "object" ? process : {}).env?.FORCE_NUMBER_TYPE) ? Number : BigInt; 
 
 function decode(encoded) {
     const decoder = decodeUnsignedValues(encoded);
@@ -81,7 +81,7 @@ function decodeUnsignedValues(encoded) {
 
     encoded.split('').forEach((char) => {
         const value = Num(decodeChar(char));
-        result += (value % Num(32)) * (Num(1) << shift);
+        result += (value % Num(32)) * (Num(2) ** shift);
         if ((value % (mask * Num(2))) < mask) {
             resList.push(result);
             result = Num(0);
@@ -172,10 +172,15 @@ function encodeUnsignedNumber(val) {
     // Uses variable integer encoding to encode an unsigned integer. Returns the encoded string.
     let res = '';
     let numVal = Num(val);
+    const bigIntSupported = typeof numVal === 'bigint';
     while (numVal > 0x1F) {
-        const pos = (numVal & Num(0x1F)) | Num(0x20);
+        const pos = (numVal % Num(32)) + Num(32);
         res += ENCODING_TABLE[pos];
-        numVal >>= Num(5);
+        if (bigIntSupported) {
+            numVal >>= Num(5);
+        } else {
+            numVal = parseInt(numVal / Num(32));
+        }
     }
     return res + ENCODING_TABLE[numVal];
 }
@@ -185,9 +190,9 @@ function encodeScaledValue(value) {
     //   `appender` is a callable where the produced chars will land to
     let numVal = Num(value);
     const negative = numVal < 0;
-    numVal <<= Num(1);
+    numVal = numVal * Num(2);
     if (negative) {
-        numVal = ~numVal;
+        numVal = numVal * Num(-1) - Num(1);
     }
 
     return encodeUnsignedNumber(numVal);
