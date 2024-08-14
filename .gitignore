@@ -8,6 +8,5 @@ obj/
 *.suo
 .idea
 .vs
-
 *.user
 *.class
