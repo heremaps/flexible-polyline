@@ -1,18 +1,17 @@
 [package]
 name = "flexpolyline"
-version = "0.1.0"
+version = "1.0.0"
+readme = "README.md"
 description = "Flexible Polyline encoding: a lossy compressed representation of a list of coordinate pairs or triples"
 authors = ["HERE Europe B.V."]
 repository = "https://github.com/heremaps/flexible-polyline.git"
 license = "MIT"
 keywords = ["polyline", "encoding"]
-edition = "2018"
-
-[dependencies]
-
-[dev-dependencies]
-rand = "0.6.5"
+edition = "2021"
 
 [[bin]]
 name = "flexpolyline"
 path = "src/cli.rs"
+
+[dev_dependencies]
+rand = "0.8.5"
