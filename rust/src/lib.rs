@@ -122,15 +122,22 @@ pub enum Polyline {
 
 impl std::fmt::Display for Polyline {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let prec = f.precision().unwrap_or(6);
         match self {
             Polyline::Data2d {
                 coordinates,
                 precision2d,
             } => {
+                let prec_2d = f.precision().unwrap_or(precision2d.to_u32() as usize);
                 write!(f, "{{({}); [", precision2d.to_u32())?;
                 for coord in coordinates {
-                    write!(f, "({:.*}, {:.*}), ", { prec }, coord.0, { prec }, coord.1)?;
+                    write!(
+                        f,
+                        "({:.*}, {:.*}), ",
+                        { prec_2d },
+                        coord.0,
+                        { prec_2d },
+                        coord.1
+                    )?;
                 }
                 write!(f, "]}}")?;
             }
@@ -140,6 +147,8 @@ impl std::fmt::Display for Polyline {
                 precision3d,
                 type3d,
             } => {
+                let prec_2d = f.precision().unwrap_or(precision2d.to_u32() as usize);
+                let prec_3d = f.precision().unwrap_or(precision3d.to_u32() as usize);
                 write!(
                     f,
                     "{{({}, {}, {}); [",
@@ -151,11 +160,11 @@ impl std::fmt::Display for Polyline {
                     write!(
                         f,
                         "({:.*}, {:.*}, {:.*}), ",
-                        { prec },
+                        { prec_2d },
                         coord.0,
-                        { prec },
+                        { prec_2d },
                         coord.1,
-                        { prec },
+                        { prec_3d },
                         coord.2
                     )?;
                 }
