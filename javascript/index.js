@@ -22,8 +22,6 @@ const LEVEL = 1;
 const ALTITUDE = 2;
 const ELEVATION = 3;
 // Reserved values 4 and 5 should not be selectable
-const CUSTOM1 = 6;
-const CUSTOM2 = 7;
 
 const Num = typeof BigInt !== "undefined" ? BigInt : Number;
 
@@ -195,7 +193,6 @@ function encodeScaledValue(value) {
 module.exports = {
     encode,
     decode,
-
     ABSENT,
     LEVEL,
     ALTITUDE,

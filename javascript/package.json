@@ -1,6 +1,6 @@
 {
   "name": "@here/flexpolyline",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Flexible Polyline encoding: a lossy compressed representation of a list of coordinate pairs or triples",
   "main": "index.js",
   "types": "index.d.ts",
