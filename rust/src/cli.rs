@@ -106,11 +106,18 @@ fn from_str(data: &str) -> flexpolyline::Polyline {
 }
 
 fn main() {
+    // Manually parse command line arguments to avoid adding any addditional dependencies
     let args: Vec<String> = std::env::args().collect();
-    if args.len() != 2 || (args[1] != "encode" && args[1] != "decode") {
-        eprintln!("Usage: flexpolyline encode|decode");
+    let original_precision_arg = "--original-precision".to_string();
+    if (args.len() != 2 && args.len() != 3)
+        || (args[1] != "encode" && args[1] != "decode")
+        || (args.len() == 3 && args[2] != original_precision_arg)
+    {
+        eprintln!("Usage: flexpolyline encode|decode [{original_precision_arg}]");
         eprintln!("       input: stdin");
         eprintln!("       output: stdout");
+        eprintln!("  Options:");
+        eprintln!("       {original_precision_arg}: Print decoded polyline with encoded precision");
         std::process::exit(1);
     }
 
@@ -132,7 +139,11 @@ fn main() {
             let input = line.unwrap();
             let polyline = flexpolyline::Polyline::decode(&input)
                 .unwrap_or_else(|e| panic!("Failed to decode {}: {}", input, e));
-            println!("{:.15}", polyline);
+            if args.get(2) == Some(&original_precision_arg) {
+                println!("{polyline}");
+            } else {
+                println!("{polyline:.15}");
+            }
         }
     }
 }

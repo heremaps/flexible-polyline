@@ -37,11 +37,11 @@ fn main() {
                         coordinates: (0..num_coords)
                             .map(|_| {
                                 (
-                                    (rng.gen_range(-range_lat, range_lat) / divisor) as f64
+                                    (rng.gen_range(-range_lat..=range_lat) / divisor) as f64
                                         / 10_i64.pow(15) as f64,
-                                    (rng.gen_range(-range_lon, range_lon) / divisor) as f64
+                                    (rng.gen_range(-range_lon..=range_lon) / divisor) as f64
                                         / 10_i64.pow(15) as f64,
-                                    (rng.gen_range(-range_z, range_z) / divisor) as f64
+                                    (rng.gen_range(-range_z..=range_z) / divisor) as f64
                                         / 10_i64.pow(14) as f64,
                                 )
                             })
@@ -55,9 +55,9 @@ fn main() {
                     coordinates: (0..num_coords)
                         .map(|_| {
                             (
-                                (rng.gen_range(-range_lat, range_lat) / divisor) as f64
+                                (rng.gen_range(-range_lat..=range_lat) / divisor) as f64
                                     / 10_i64.pow(15) as f64,
-                                (rng.gen_range(-range_lon, range_lon) / divisor) as f64
+                                (rng.gen_range(-range_lon..=range_lon) / divisor) as f64
                                     / 10_i64.pow(15) as f64,
                             )
                         })
