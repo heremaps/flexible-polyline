@@ -7,7 +7,7 @@
   "bin": "./cli.js",
   "scripts": {
     "prepack": "cp ../LICENSE .",
-    "test": "node test/test.js",
+    "test": "node test/test.js && FORCE_NUMBER_TYPE=true node test/test.js",
     "release": "./release.sh"
   },
   "keywords": [
