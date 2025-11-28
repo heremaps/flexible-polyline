@@ -23,7 +23,6 @@ pip install flexpolyline
 #### `encode(iterable, precision=5, third_dim=ABSENT, third_dim_precision=0)`
 
 Encodes a list (or iterator) of coordinates to the corresponding string representation. See the optional parameters below for further customization. Coordinate order is `(lat, lng[, third_dim])`.
-```
 
 **Optional parameters**
 
